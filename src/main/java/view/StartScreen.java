@@ -6,7 +6,7 @@ package view;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
-public class SplashScreen extends Application {
+public class StartScreen extends Application {
 
     public static void main(String[] args) {
         launch(args);
@@ -14,6 +14,7 @@ public class SplashScreen extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
 
     }
 }
