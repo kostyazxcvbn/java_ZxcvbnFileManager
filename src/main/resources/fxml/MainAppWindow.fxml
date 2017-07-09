@@ -1,5 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="400.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.MainAppWindowController" />
+
+<AnchorPane minWidth="800.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.MainAppWindowController">
+   <children>
+      <VBox AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <MenuBar VBox.vgrow="NEVER">
+              <menus>
+                <Menu mnemonicParsing="false" text="File">
+                  <items>
+                        <MenuItem fx:id="mi_close" mnemonicParsing="false" onAction="#closeApp" text="Close" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                  <items>
+                    <MenuItem fx:id="mi_copy" mnemonicParsing="false" onAction="#copyItems" text="Copy" />
+                        <MenuItem fx:id="ni_cut" mnemonicParsing="false" onAction="#cutItems" text="Cut" />
+                        <MenuItem fx:id="mi_paste" mnemonicParsing="false" onAction="#pasteItems" text="Paste" />
+                        <MenuItem fx:id="mi_delete" mnemonicParsing="false" onAction="#deleteItems" text="Delete" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                      <MenuItem fx:id="mi_rename" mnemonicParsing="false" onAction="#renameItem" text="Rename" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="View">
+                  <items>
+                        <CheckMenuItem fx:id="cmi_showHiddenItems" mnemonicParsing="false" onAction="#showHiddenItems" text="Show hidden items" />
+                  </items>
+                </Menu>
+                  <Menu mnemonicParsing="false" text="Help">
+                     <items>
+                        <MenuItem fx:id="mi_about" mnemonicParsing="false" onAction="#showAboutInfo" text="About" />
+                     </items>
+                  </Menu>
+              </menus>
+            </MenuBar>
+            <ToolBar minHeight="40.0" minWidth="800.0" prefHeight="40.0" prefWidth="1000.0">
+              <items>
+                <Button fx:id="toolb_copy" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onMouseClicked="#copyItems" prefHeight="32.0" prefWidth="32.0" text="Copy" />
+                  <Button fx:id="toolb_cut" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onMouseClicked="#cutItems" prefHeight="32.0" prefWidth="32.0" text="Cut" />
+                  <Button fx:id="toolb_edit" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onMouseClicked="#pasteItems" prefHeight="32.0" prefWidth="32.0" text="Edit" />
+                  <Button fx:id="toolb_delete" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onMouseClicked="#deleteItems" prefHeight="32.0" prefWidth="32.0" text="Delete" />
+                  <Separator orientation="VERTICAL" prefHeight="200.0" />
+                  <Button fx:id="toolb_rename" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onMouseClicked="#renameItem" prefHeight="32.0" prefWidth="32.0" text="Rename" />
+                  <Separator orientation="VERTICAL" prefHeight="200.0" />
+                  <ToggleButton fx:id="toolb_showHiddenItems" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#changeFilesVisibility" onMouseClicked="#showHiddenItems" prefHeight="32.0" prefWidth="32.0" text="Show hidden items" />
+              </items>
+            </ToolBar>
+         </children>
+      </VBox>
+      <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="64.0">
+         <children>
+            <TitledPane animated="false" collapsible="false" minWidth="800.0" prefWidth="1000.0" text="First panel" VBox.vgrow="ALWAYS">
+               <content>
+                  <SplitPane dividerPositions="0.25" minWidth="800.0" prefWidth="1000.0" HBox.hgrow="ALWAYS">
+                    <items>
+                      <AnchorPane>
+                           <children>
+                              <TreeView fx:id="treev_firstPanel" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                           </children>
+                        </AnchorPane>
+                      <AnchorPane>
+                           <children>
+                              <TableView fx:id="tablev_firstPanel" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                <columns>
+                                  <TableColumn minWidth="100.0" prefWidth="350.0" text="Name" />
+                                  <TableColumn maxWidth="50.0" minWidth="50.0" prefWidth="50.0" resizable="false" text="Type" />
+                                    <TableColumn maxWidth="70.0" minWidth="70.0" prefWidth="70.0" resizable="false" text="Create date" />
+                                    <TableColumn maxWidth="70.0" minWidth="70.0" prefWidth="70.0" resizable="false" text="Last modified" />
+                                    <TableColumn maxWidth="200.0" minWidth="70.0" prefWidth="70.0" text="Size" />
+                                    <TableColumn maxWidth="100.0" minWidth="70.0" prefWidth="70.0" resizable="false" text="Attributes" />
+                                </columns>
+                                 <columnResizePolicy>
+                                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                 </columnResizePolicy>
+                              </TableView>
+                           </children>
+                        </AnchorPane>
+                    </items>
+                     <HBox.margin>
+                        <Insets bottom="10.0" left="10.0" right="5.0" top="10.0" />
+                     </HBox.margin>
+                  </SplitPane>
+               </content>
+            </TitledPane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
