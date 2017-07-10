@@ -11,17 +11,43 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.IOException;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainController extends Application {
 
     private static Stage primaryStage;
+    private static Stage currentStage;
+    private static ExecutorService mainAppPool;
+
+    public static ExecutorService getMainAppPool() {
+        return mainAppPool;
+    }
+
+    public static void setMainAppPool(ExecutorService mainAppPool) {
+        if (MainController.mainAppPool == null) {
+            MainController.mainAppPool = mainAppPool;
+        }
+    }
+
+    public static Stage getCurrentStage() {
+        return currentStage;
+    }
+
+    public static void setCurrentStage(Stage currentStage) {
+        MainController.currentStage = currentStage;
+    }
 
     public static Stage getPrimaryStage() {
         return primaryStage;
     }
 
     public static void setPrimaryStage(Stage primaryStage) {
-        MainController.primaryStage = primaryStage;
+        if(MainController.primaryStage==null){
+            MainController.primaryStage = primaryStage;
+        }
+
     }
 
     public static void main(String[] args) {
@@ -31,23 +57,23 @@ public class MainController extends Application {
     @Override
     public void start(Stage primaryStage) {
 
-        Parent root=null;
-        Stage startStage;
-        IController startScreenController;
+        Stage startStage = new Stage(StageStyle.UNDECORATED);;
+
 
         setPrimaryStage(primaryStage);
-        FXMLLoader fxmlLoader=new FXMLLoader(getClass().getResource("/fxml/StartScreen.fxml"));
+        setMainAppPool(Executors.newCachedThreadPool());
+
+        Parent root = null;
         try {
-            root=fxmlLoader.load();
+            root = FXMLLoader.load(getClass().getResource("/fxml/StartScreen.fxml"));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        startScreenController=fxmlLoader.getController();
+
         Scene scene=new Scene(root);
-        startStage=new Stage(StageStyle.UNDECORATED);
         startStage.setScene(scene);
         startStage.sizeToScene();
         startStage.show();
-        startScreenController.initialize();
+        setCurrentStage(startStage);
     }
 }
