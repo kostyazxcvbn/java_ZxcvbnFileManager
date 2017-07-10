@@ -62,10 +62,12 @@ public class MainController extends Application {
 
         setPrimaryStage(primaryStage);
         setMainAppPool(Executors.newCachedThreadPool());
+        FXMLLoader fxmlLoader=null;
 
         Parent root = null;
         try {
-            root = FXMLLoader.load(getClass().getResource("/fxml/StartScreen.fxml"));
+            fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/StartScreen.fxml"));
+            root = fxmlLoader.load();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -75,5 +77,7 @@ public class MainController extends Application {
         startStage.sizeToScene();
         startStage.show();
         setCurrentStage(startStage);
+        IController c=fxmlLoader.getController();
+        c.init();
     }
 }

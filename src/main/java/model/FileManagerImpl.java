@@ -87,7 +87,7 @@ public class FileManagerImpl implements IFileManager{
         if (source == null) {
             File[] roots = File.listRoots();
             for (File root : roots) {
-                sourceContent.add(new Item(root.toPath()));
+                sourceContent.add(new Item(root.toPath(),"/img/itemDisk.png"));
             }
         } else {
             try(DirectoryStream<Path> dirContent = Files.newDirectoryStream(source.getPath())) {
