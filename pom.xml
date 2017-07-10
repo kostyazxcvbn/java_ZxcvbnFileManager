@@ -16,7 +16,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>8.6.0</version>
                 <configuration>
-                    <mainClass>view.StartScreen</mainClass>
+                    <mainClass>vcontroller.MainController</mainClass>
                 </configuration>
             </plugin>
         </plugins>

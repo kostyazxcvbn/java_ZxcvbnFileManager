@@ -1,8 +1,11 @@
 package interfaces;
 
-import java.nio.file.Path;
+
+import model.Item;
+
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static model.AppEnums.*;
 
@@ -12,14 +15,14 @@ import static model.AppEnums.*;
 
 public interface IFileManager {
 
-    Map<Path, ItemConflicts> deleteItems(HashSet<Path> items);
-    Path renameItem(Path path, String newName);
-    Path createFile(Path path, String newName);
-    Path createDirectory(Path path, String newNam);
-    HashSet<Path> getContent(Path source, boolean onlyDirectories);
-    Map<Path, ItemConflicts> copyItemsToBuffer(HashSet<Path> items);
-    Map<Path, ItemConflicts> cutItemsToBuffer(HashSet<Path> items);
-    Map<Path, ItemConflicts> moveItemsTo(HashSet<Path> items, Path destination, boolean isSourceWillBeDeleted);
-    Map<Path,ItemConflicts> pasteItemsFromBuffer(Path destination);
+    Map<Item, ItemConflicts> deleteItems(HashSet<Item> items);
+    Item renameItem(Item Item, String newName);
+    Item createFile(String path, String newName);
+    Item createDirectory(String path, String newNam);
+    Set<Item> getContent(Item source, boolean onlyDirectories);
+    Map<Item, ItemConflicts> copyItemsToBuffer(HashSet<Item> items);
+    Map<Item, ItemConflicts> cutItemsToBuffer(HashSet<Item> items);
+    Map<Item, ItemConflicts> moveItemsTo(HashSet<Item> items, Item destination, boolean isSourceWillBeDeleted);
+    Map<Item, ItemConflicts> pasteItemsFromBuffer(Item destination);
     void setConflictListener(IConflictListener conflictListener);
 }
