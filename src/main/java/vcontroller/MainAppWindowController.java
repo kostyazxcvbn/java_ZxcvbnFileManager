@@ -5,6 +5,7 @@ import com.sun.javafx.iio.ImageFrame;
 import interfaces.IConflictListener;
 import interfaces.IFileManager;
 import javafx.application.Application;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -48,7 +49,7 @@ public class MainAppWindowController{
     public ToggleButton toolbShowHiddenItems;
 
     private IFileManager fileManager;
-    private Item selectedItem;
+    private TreeItem<Item> selectedItem;
 
     public void closeApp(ActionEvent actionEvent) {
 
@@ -105,11 +106,22 @@ public class MainAppWindowController{
 
     private void initItemsView() {
         initItemsTree();
-        initItemContent();
+        initItemContentView();
+        getItemContent(TreeItemFactory.getRoot());
     }
 
-    private void initItemContent() {
+    private void initItemContentView() {
+        tablevDirContent.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+    }
 
+    private void getItemContent(TreeItem<Item> item) {
+        item.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/img/itemWaiting.png")))); //TODO image loading
+        HashSet<Item>innerItems = (HashSet)fileManager.getContent(item.getValue(), false);
+        if(cmiShowHiddenItems.isSelected()){
+
+        }
+        ObservableList<Item> innerItemsInView = tablevDirContent.getItems();
+        innerItemsInView.addAll(innerItems);
     }
 
     private void initItemsTree() {
@@ -118,6 +130,7 @@ public class MainAppWindowController{
             runFatalErrorHandler();
         }
 
+        treevItemsTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         treevItemsTree.setRoot(TreeItemFactory.getRoot());
         for (Item item : rootItems) {
             treevItemsTree.getRoot().getChildren().add(TreeItemFactory.getTreeItem(item));
@@ -128,6 +141,7 @@ public class MainAppWindowController{
                 return (((TreeItem<Item>)o1).getValue().getPath().toAbsolutePath().toString().compareTo(((TreeItem<Item>)o2).getValue().getPath().toAbsolutePath().toString()));
             }
         });
+
     }
 
     private void runFatalErrorHandler() {
