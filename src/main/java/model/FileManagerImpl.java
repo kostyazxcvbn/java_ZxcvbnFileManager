@@ -84,10 +84,10 @@ public class FileManagerImpl implements IFileManager{
 
         Set<Item>sourceContent = new HashSet<>();
 
-        if (source == null) {
+        if (source.getPath().getFileName().toString().equals("root")) {
             File[] roots = File.listRoots();
             for (File root : roots) {
-                sourceContent.add(new Item(root.toPath(),"/img/itemDisk.png"));
+                sourceContent.add(new Item(root.toPath(), true));
             }
         } else {
             try(DirectoryStream<Path> dirContent = Files.newDirectoryStream(source.getPath())) {

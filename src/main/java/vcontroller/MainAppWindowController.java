@@ -1,30 +1,14 @@
 package vcontroller;
 
-import com.sun.imageio.plugins.png.PNGImageReader;
-import com.sun.javafx.iio.ImageFrame;
-import interfaces.IConflictListener;
 import interfaces.IFileManager;
-import javafx.application.Application;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
-import javafx.stage.Stage;
 import model.FileManagerImpl;
 import model.Item;
 
-import javax.imageio.ImageReader;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.HashSet;
 
@@ -107,7 +91,7 @@ public class MainAppWindowController{
     private void initItemsView() {
         initItemsTree();
         initItemContentView();
-        getItemContent(TreeItemFactory.getRoot());
+        getItemContent(ItemViewFactory.getRoot());
     }
 
     private void initItemContentView() {
@@ -115,25 +99,37 @@ public class MainAppWindowController{
     }
 
     private void getItemContent(TreeItem<Item> item) {
-        item.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/img/itemWaiting.png")))); //TODO image loading
+        ImageView tempImageView = (ImageView)item.getGraphic();
+        item.setGraphic(ItemViewFactory.getItemWaiting()); //TODO image loading
+
         HashSet<Item>innerItems = (HashSet)fileManager.getContent(item.getValue(), false);
         if(cmiShowHiddenItems.isSelected()){
 
         }
-        ObservableList<Item> innerItemsInView = tablevDirContent.getItems();
-        innerItemsInView.addAll(innerItems);
-    }
 
-    private void initItemsTree() {
-        HashSet<Item>rootItems = (HashSet)fileManager.getContent(null,true);
-        if (rootItems == null) {
+        if (innerItems == null) { //TODO make Exception
             runFatalErrorHandler();
         }
 
+        ObservableList<Item> innerItemsInView = tablevDirContent.getItems();
+        innerItemsInView.addAll(innerItems);
+
+        item.setGraphic(tempImageView); //TODO image loading,  make a method in the Item class
+    }
+
+    private void initItemsTree() {
+
         treevItemsTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        treevItemsTree.setRoot(TreeItemFactory.getRoot());
+
+        HashSet<Item>rootItems = (HashSet)fileManager.getContent(ItemViewFactory.getRoot().getValue(),true);
+
+        if (rootItems == null) { //TODO make Exception
+            runFatalErrorHandler();
+        }
+
+        treevItemsTree.setRoot(ItemViewFactory.getRoot());
         for (Item item : rootItems) {
-            treevItemsTree.getRoot().getChildren().add(TreeItemFactory.getTreeItem(item));
+            treevItemsTree.getRoot().getChildren().add(ItemViewFactory.getTreeItem(item));
         }
         treevItemsTree.getRoot().getChildren().sort(new Comparator() {
             @Override
