@@ -1,13 +1,9 @@
 package model;
 
-import javafx.scene.Node;
-import javafx.scene.control.TreeItem;
-import javafx.scene.image.Image;
 
-
+import javax.swing.text.html.ImageView;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
@@ -21,7 +17,7 @@ public class Item{
     private String type;
     private String size;
     private String lastModifiedDate;
-    private String сreatedDate;
+    private String createdDate;
     private boolean isHidden;
     private boolean isWritable;
     private boolean isReadable;
@@ -36,16 +32,18 @@ public class Item{
     }
 
     public Item(Path path, boolean isRootStorage) {
-        this(path);
+        this.path = path;
+        this.isAvailable=true;
         this.isRootStorage = isRootStorage;
+        initAttributes(path);
     }
 
     public boolean isRootStorage() {
         return isRootStorage;
     }
 
-    public String getСreatedDate() {
-        return сreatedDate;
+    public String getCreatedDate() {
+        return createdDate;
     }
 
     public boolean isAvailable() {
@@ -92,31 +90,59 @@ public class Item{
 
 
     private void initAttributes(Path path){
-        BasicFileAttributes attribs = null;
 
-        try {
-            attribs = Files.readAttributes(path, BasicFileAttributes.class);
-            this.isDirectory = attribs.isDirectory();
-            this.сreatedDate = attribs.creationTime().toString();
-            this.lastModifiedDate = attribs.lastModifiedTime().toString();
-            this.size=String.valueOf(attribs.size());
+        if(path.toAbsolutePath().toString().equals("/root")){
             this.name=path.getFileName().toString();
-            if(isDirectory){
-                this.type = "<DIR>";
-            }else{
-                if(this.name.contains(".")){
-                    String[] nameArray = this.name.split(".");
-                    this.type=nameArray[nameArray.length-1];
-                }else{
-                    this.type="?";
-                }
-            }
-            this.isHidden=Files.isHidden(path);
-            this.isReadable = Files.isReadable(path);
-            this.isWritable = Files.isWritable(path);
-        } catch (IOException e) {
-            this.isAvailable=false;
         }
+        else{
+            BasicFileAttributes attribs = null;
+
+            try {
+                attribs = Files.readAttributes(path, BasicFileAttributes.class);
+                this.isDirectory = attribs.isDirectory();
+
+                if(isDirectory && !isRootStorage){
+                    this.type = "<DIR>";
+
+                    this.createdDate = attribs.creationTime().toString();
+                    this.lastModifiedDate = attribs.lastModifiedTime().toString();
+                    this.size=String.valueOf(attribs.size());
+                    this.name=path.getFileName().toString();
+                    this.isHidden = Files.isHidden(path);
+                    this.isReadable = Files.isReadable(path);
+                    this.isWritable = Files.isWritable(path);
+                }
+                if (isRootStorage) {
+                    this.type = "<DRIVE>";
+                    this.name =path.toAbsolutePath().toString();
+                    this.size ="";
+                    this.createdDate="";
+                    this.lastModifiedDate="";
+                }
+                if (!isDirectory()) {
+
+                    if (this.name.contains(".")) {
+                        String[] nameArray = this.name.split(".");
+                        this.type = nameArray[nameArray.length - 1];
+                    } else {
+                        this.type = "?";
+                    }
+
+                    this.createdDate = attribs.creationTime().toString();
+                    this.lastModifiedDate = attribs.lastModifiedTime().toString();
+                    this.size=String.valueOf(attribs.size());
+                    this.name=path.getFileName().toString();
+                    this.isHidden = Files.isHidden(path);
+                    this.isReadable = Files.isReadable(path);
+                    this.isWritable = Files.isWritable(path);
+                }
+
+            } catch (IOException e) {
+                this.isAvailable=false;
+            }
+
+        }
+
 
     };
 
@@ -129,7 +155,7 @@ public class Item{
 
     @Override
     public boolean equals(Object obj) {
-        return (this.hashCode()==obj.hashCode() && path.getParent().toString().equals(((Item)obj).getPath().getParent().toString()));
+        return (this.hashCode()==obj.hashCode());
     }
 
     @Override

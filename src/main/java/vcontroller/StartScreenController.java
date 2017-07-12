@@ -21,7 +21,6 @@ import java.util.concurrent.*;
  */
 public class StartScreenController implements  IController{
 
-    public Label labelStartScreenLoading;
     public ProgressBar progbStartScreenLoading;
 
     synchronized public void init() {
@@ -33,6 +32,7 @@ public class StartScreenController implements  IController{
         Thread loadingImitator = new Thread(new Runnable() {
             @Override
             public void run() {
+
                 Random random = new Random();
                 double progressLevel = 0;
                 do {
