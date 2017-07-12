@@ -83,6 +83,9 @@
                               <TableView fx:id="tablevDirContent" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" >
                                 <columns>
                                     <TableColumn prefWidth="40.0" resizable="false" fx:id="columnItemImage">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="icon" />
+                                        </cellValueFactory>
                                     </TableColumn>
                                     <TableColumn minWidth="100.0" prefWidth="350.0" text="Name" fx:id="columnName">
                                         <cellValueFactory>

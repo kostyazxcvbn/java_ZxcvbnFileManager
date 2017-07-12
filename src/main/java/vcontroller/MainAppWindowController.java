@@ -1,23 +1,26 @@
 package vcontroller;
 
 import interfaces.IFileManager;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.util.Callback;
 import model.FileManagerImpl;
 import model.Item;
 
-import java.util.Comparator;
 import java.util.HashSet;
+import java.util.concurrent.ExecutorService;
 
 import static model.AppEnums.*;
+import static vcontroller.ItemViewFactory.FxOptimizedItem;
 
 
 /**
@@ -46,7 +49,36 @@ public class MainAppWindowController{
 
     private IFileManager fileManager;
     private TreeItem<Item>parentItem;
-    private ObservableList<Item>selectedItems;
+    private HashSet<Item>selectedItems;
+    private ExecutorService threadLogicUIPool;
+
+    private class ItemContentLoader extends Task<Void>{
+        ImageView tempImageView;
+        TreeItem<Item> item;
+
+        public ItemContentLoader(ImageView tempImageView, TreeItem<Item> item) {
+            this.tempImageView = tempImageView;
+            this.item=item;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            Platform.runLater(() -> item.setGraphic(ItemViewFactory.getItemWaiting()));
+
+            if(!selectedItems.isEmpty()){
+
+                ObservableList<FxOptimizedItem> innerItemsInView = tablevDirContent.getItems();
+                innerItemsInView.clear();
+
+                for (Item cuttentItem : selectedItems) {
+                    Platform.runLater(() -> innerItemsInView.add(ItemViewFactory.getNewfxOptimizedItem(cuttentItem)));
+                }
+            }
+
+            Platform.runLater(() -> item.setGraphic(tempImageView));
+            return null;
+        }
+    }
 
 
     public NameConflictState onConflict() {
@@ -56,112 +88,118 @@ public class MainAppWindowController{
     public void initialize(){
 
         fileManager=FileManagerImpl.getInstance();
+        threadLogicUIPool=MainController.getThreadLogicUIPool();
 
         initButtons();
-
-        initItemsView();
-
-    }
-
-    private void initItemsView() {
         initItemsTree();
         initItemContentView();
+
+        loadParentDirectoriesInTree(parentItem,selectedItems);
         getItemContent(parentItem);
+
+
+
     }
+
 
     private void initItemContentView() {
         tablevDirContent.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-    }
-        //columnAttributes.setCellValueFactory(new PropertyValueFactory<>("name"));//TODO attributes
-
-
-    private void getItemContent(TreeItem<Item> item) {
-        ImageView tempImageView = (ImageView)item.getGraphic();
-        item.setGraphic(ItemViewFactory.getItemWaiting()); //TODO image loading
-
-        HashSet<Item>innerItems = (HashSet)fileManager.getContent(item.getValue(), false);
-        if(cmiShowHiddenItems.isSelected()){
-
-        }
-
-        if (innerItems == null) { //TODO make Exception
-            runFatalErrorHandler();
-        }
-
-        ObservableList<Item> innerItemsInView = tablevDirContent.getItems();
-        for (Item cuttentItem : innerItems) {
-            innerItemsInView.add(cuttentItem);
-            columnItemImage.setCellValueFactory(param -> {
-                ImageView imageView = ItemViewFactory.getItemImageView(cuttentItem);
-                return new SimpleObjectProperty<>(imageView);
-            });
-        }
-
-
-        item.setGraphic(tempImageView); //TODO image loading,  make a method in the Item class
     }
 
     private void initItemsTree() {
-        TreeItem<Item>root=ItemViewFactory.getRoot();
-        parentItem=root;
 
+        parentItem=ItemViewFactory.getRoot();
         treevItemsTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        HashSet<Item>rootItems = (HashSet)fileManager.getContent(root.getValue(), true);
-
-        if (rootItems == null) { //TODO make Exception
-            runFatalErrorHandler();
-        }
-
-        treevItemsTree.setRoot(root);
-        new Thread(new Runnable() {
-            @Override
-            public void run() { //TODO thread
-                for (Item item : rootItems) {
-                    treevItemsTree.getRoot().getChildren().add(ItemViewFactory.getTreeItem(item));
-                }
-                treevItemsTree.getRoot().getChildren().sort(new Comparator() {
-                    @Override
-                    public int compare(Object o1, Object o2) {
-                        return (((TreeItem<Item>)o1).getValue().getPath().toAbsolutePath().toString().compareTo(((TreeItem<Item>)o2).getValue().getPath().toAbsolutePath().toString()));
-                    }
-                });
-            }
-        }).start();
+        selectedItems = (HashSet)fileManager.getContent(parentItem.getValue());
+        treevItemsTree.setRoot(parentItem);
     }
 
-    private void runFatalErrorHandler() {
+    private void getItemContent(TreeItem<Item> item) {
+
+        ImageView tempImageViewLink = (ImageView)item.getGraphic();
+        ImageView tempImageView = tempImageViewLink;
+        item.setGraphic(ItemViewFactory.getItemWaiting());
+
+
+        ItemContentLoader contentLoader = new ItemContentLoader(tempImageView, item);
+        threadLogicUIPool.execute(contentLoader);
+
+    }
+
+    private void loadParentDirectoriesInTree(TreeItem<Item> parentItem, HashSet<Item>selectedItems){
+
+        ObservableList<TreeItem<Item>> childrenDirectories =  parentItem.getChildren();
+        childrenDirectories.clear();
+
+        Task<Void> subdirectoriesLoader = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                for (Item item : selectedItems) {
+                    if(item.isDirectory()){
+                        Platform.runLater(() -> childrenDirectories.add(ItemViewFactory.getTreeItem(item)));
+                    }
+                }
+                Platform.runLater(() -> parentItem.getChildren().sort((o1, o2) ->
+                        (o1.getValue().getPath().toAbsolutePath().toString().compareTo(o2.getValue().getPath().toAbsolutePath().toString()))));
+                return null;
+            }
+        };
+
+        threadLogicUIPool.execute(subdirectoriesLoader);
+    }
+
+    private void onItemsLoadingErrorHandler() {
     }
 
     private void initButtons() {
-        Image image;
 
-        image= new Image(getClass().getResourceAsStream("/img/iconCopy.png"));
-        toolbCopy.setGraphic(new ImageView(image));
+        Task<Void> buttonsImageLoader = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
 
-        image= new Image(getClass().getResourceAsStream("/img/iconCut.png"));
-        toolbCut.setGraphic(new ImageView(image));
+                Image imageToolbCopy=new Image(getClass().getResourceAsStream("/img/iconCopy.png"));
+                Image imageToolbCut=new Image(getClass().getResourceAsStream("/img/iconCut.png"));
+                Image imageToolbDelete=new Image(getClass().getResourceAsStream("/img/iconRemove.png"));
+                Image imageToolbRename=new Image(getClass().getResourceAsStream("/img/iconRename.png"));
+                Image imageToolbPaste=new Image(getClass().getResourceAsStream("/img/iconPaste.png"));
+                Image imageToolbShowHiddenItems=new Image(getClass().getResourceAsStream("/img/iconHide.png"));
 
-        image= new Image(getClass().getResourceAsStream("/img/iconRemove.png"));
-        toolbDelete.setGraphic(new ImageView(image));
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        toolbCopy.setGraphic(new ImageView(imageToolbCopy));
+                        toolbCut.setGraphic(new ImageView(imageToolbCut));
+                        toolbDelete.setGraphic(new ImageView(imageToolbDelete));
+                        toolbRename.setGraphic(new ImageView(imageToolbRename));
+                        toolbPaste.setGraphic(new ImageView(imageToolbPaste));
+                        toolbShowHiddenItems.setGraphic(new ImageView(imageToolbShowHiddenItems));
+                    }
+                });
 
-        image= new Image(getClass().getResourceAsStream("/img/iconRename.png"));
-        toolbRename.setGraphic(new ImageView(image));
-
-        image= new Image(getClass().getResourceAsStream("/img/iconPaste.png"));
-        toolbPaste.setGraphic(new ImageView(image));
-
-        image= new Image(getClass().getResourceAsStream("/img/iconHide.png"));
-        toolbShowHiddenItems.setGraphic(new ImageView(image));
+                return null;
+            }
+        };
+        threadLogicUIPool.execute(buttonsImageLoader);
     }
 
     public void loadItemContent(MouseEvent mouseEvent) {
+
+        TreeItem<Item> tempSelectedLink=parentItem;
+        TreeItem<Item> tempSelected=tempSelectedLink;
+
         try {
             parentItem=(TreeItem<Item>)treevItemsTree.getSelectionModel().getSelectedItem();
-            System.out.println(parentItem.getValue().getName());
+
         } catch (NullPointerException e) {
             return;
         }
+
+        parentItem=(parentItem==null)?tempSelected:parentItem;
+
+        selectedItems = (HashSet)fileManager.getContent(parentItem.getValue());
+        loadParentDirectoriesInTree(parentItem,selectedItems);
+        getItemContent(parentItem);
+
     }
     public void closeApp(ActionEvent actionEvent) {
 

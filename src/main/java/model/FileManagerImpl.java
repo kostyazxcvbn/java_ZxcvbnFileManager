@@ -80,11 +80,11 @@ public class FileManagerImpl implements IFileManager{
     }
 
     @Override
-    public Set<Item> getContent(Item source, boolean onlyDirectories) {
+    public Set<Item> getContent(Item source){
 
         Set<Item>sourceContent = new HashSet<>();
 
-        if (source.getPath().getFileName().toString().equals("root")) {
+        if (source.getName().equals("root")) {
             File[] roots = File.listRoots();
             for (File root : roots) {
                 sourceContent.add(new Item(root.toPath(), true));
@@ -92,16 +92,11 @@ public class FileManagerImpl implements IFileManager{
         } else {
             try(DirectoryStream<Path> dirContent = Files.newDirectoryStream(source.getPath())) {
                 for (Path innerItem : dirContent) {
-                    if (onlyDirectories) {
-                        if (Files.isDirectory(innerItem)) {
-                            sourceContent.add(new Item(innerItem));
-                        }
-                    } else {
-                        sourceContent.add(new Item(innerItem));
-                    }
+                    sourceContent.add(new Item(innerItem));
+
                 }
             } catch (Exception e) {
-                return null;
+                return Collections.EMPTY_SET;
             }
         }
         return sourceContent;

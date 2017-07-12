@@ -19,7 +19,7 @@ public interface IFileManager {
     Item renameItem(Item Item, String newName);
     Item createFile(String path, String newName);
     Item createDirectory(String path, String newNam);
-    Set<Item> getContent(Item source, boolean onlyDirectories);
+    Set<Item> getContent(Item source);
     Map<Item, ItemConflicts> copyItemsToBuffer(HashSet<Item> items);
     Map<Item, ItemConflicts> cutItemsToBuffer(HashSet<Item> items);
     Map<Item, ItemConflicts> moveItemsTo(HashSet<Item> items, Item destination, boolean isSourceWillBeDeleted);

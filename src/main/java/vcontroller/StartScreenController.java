@@ -2,6 +2,7 @@ package vcontroller;
 
 import interfaces.IController;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -22,21 +23,29 @@ import java.util.concurrent.*;
 public class StartScreenController implements  IController{
 
     public ProgressBar progbStartScreenLoading;
+    private ExecutorService threadLogicUIPool;
 
     synchronized public void init() {
+        threadLogicUIPool=MainController.getThreadLogicUIPool();
         imitateLoading();
     }
 
     private void imitateLoading() {
 
-        Thread loadingImitator = new Thread(new Runnable() {
+        Task<Void> loadingImitator = new Task<Void>() {
             @Override
-            public void run() {
-
+            protected Void call() throws Exception {
                 Random random = new Random();
                 double progressLevel = 0;
                 do {
-                    progbStartScreenLoading.setProgress(progressLevel);
+                    double finalProgressLevel = progressLevel;
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            progbStartScreenLoading.setProgress(finalProgressLevel);
+                        }
+                    });
+
                     progressLevel = progressLevel + (double) (random.nextInt(5) + 5) / 100;
                     try {
                         Thread.sleep(random.nextInt(200) + 100);
@@ -46,16 +55,12 @@ public class StartScreenController implements  IController{
                 } while (progressLevel < 1);
                 progbStartScreenLoading.setProgress(1);
 
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        showMainWindow();
-                    }
-                });
-
+                Platform.runLater(() -> showMainWindow());
+                return null;
             }
-        });
-        loadingImitator.start();
+        };
+
+        threadLogicUIPool.execute(loadingImitator);
     }
 
     private void showMainWindow() {
@@ -64,7 +69,7 @@ public class StartScreenController implements  IController{
         try {
             root = FXMLLoader.load(getClass().getResource("/fxml/MainAppWindow.fxml"));
         } catch (IOException e) {
-            e.printStackTrace();
+            runAppFatalErrorHandler();
         }
 
         Scene scene=new Scene(root);
@@ -74,6 +79,9 @@ public class StartScreenController implements  IController{
         stage.show();
 
         MainController.getCurrentStage().close();
+    }
+
+    private void runAppFatalErrorHandler() {
     }
 }
 

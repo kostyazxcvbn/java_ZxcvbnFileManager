@@ -1,11 +1,11 @@
 package vcontroller;
 
-import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import model.Item;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -25,7 +25,42 @@ public final class ItemViewFactory {
     private static Image fileCutted;
     private static Image itemWaiting;
     private static Image itemRoot;
-    private static Image itemDisk;
+    private static Image itemDrive;
+
+    public static class FxOptimizedItem {
+
+        private ImageView icon;
+        private Item item;
+
+        public String getCreatedDate() {
+            return item.getCreatedDate();
+        }
+
+        public String getName() {
+            return item.getName();
+        }
+
+        public String getType() {
+            return item.getType();
+        }
+
+        public String getSize() {
+            return item.getSize();
+        }
+
+        public String getLastModifiedDate() {
+            return item.getLastModifiedDate();
+        }
+
+        public FxOptimizedItem(Item item) {
+            this.item=item;
+            icon = getItemImageView(item);
+        }
+
+        public ImageView getIcon() {
+            return icon;
+        }
+    }
 
     static{
         try {
@@ -80,14 +115,10 @@ public final class ItemViewFactory {
             itemRoot=null;
         }
         try {
-            itemDisk=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemDrive.png")));
+            itemDrive =new Image((ItemViewFactory.class.getResourceAsStream("/img/itemDrive.png")));
         } catch (Exception e) {
-            itemDisk=null;
+            itemDrive =null;
         }
-    }
-
-    public static Image getItemDisk() {
-        return itemDisk;
     }
 
     public static TreeItem<Item> getTreeItem(Item item){
@@ -116,7 +147,7 @@ public final class ItemViewFactory {
 
                 }
             }else{
-                return new ImageView(itemDisk);
+                return new ImageView(itemDrive);
             }
         } catch (Exception e) {
             return new ImageView();
@@ -128,5 +159,9 @@ public final class ItemViewFactory {
 
     public static ImageView getItemWaiting() {
         return new ImageView(itemWaiting);
+    }
+
+    public static FxOptimizedItem getNewfxOptimizedItem(Item item){
+        return new FxOptimizedItem(item);
     }
 }

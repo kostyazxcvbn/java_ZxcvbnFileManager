@@ -11,7 +11,6 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.IOException;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,15 +18,15 @@ public class MainController extends Application {
 
     private static Stage primaryStage;
     private static Stage currentStage;
-    private static ExecutorService mainAppPool;
+    private static ExecutorService threadLogicUIPool;
 
-    public static ExecutorService getMainAppPool() {
-        return mainAppPool;
+    public static ExecutorService getThreadLogicUIPool() {
+        return threadLogicUIPool;
     }
 
-    public static void setMainAppPool(ExecutorService mainAppPool) {
-        if (MainController.mainAppPool == null) {
-            MainController.mainAppPool = mainAppPool;
+    public static void setThreadLogicUIPool(ExecutorService threadLogicUIPool) {
+        if (MainController.threadLogicUIPool == null) {
+            MainController.threadLogicUIPool = threadLogicUIPool;
         }
     }
 
@@ -61,7 +60,7 @@ public class MainController extends Application {
 
 
         setPrimaryStage(primaryStage);
-        setMainAppPool(Executors.newCachedThreadPool());
+        setThreadLogicUIPool(Executors.newCachedThreadPool());
         FXMLLoader fxmlLoader=null;
 
         Parent root = null;
@@ -79,5 +78,6 @@ public class MainController extends Application {
         setCurrentStage(startStage);
         IController c=fxmlLoader.getController();
         c.init();
+
     }
 }

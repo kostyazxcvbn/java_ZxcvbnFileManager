@@ -91,8 +91,9 @@ public class Item{
 
     private void initAttributes(Path path){
 
-        if(path.toAbsolutePath().toString().equals("/root")){
+        if(path.startsWith("/root")){
             this.name=path.getFileName().toString();
+            this.isDirectory=true;
         }
         else{
             BasicFileAttributes attribs = null;
@@ -121,8 +122,10 @@ public class Item{
                 }
                 if (!isDirectory()) {
 
+                    this.name=path.getFileName().toString();
+
                     if (this.name.contains(".")) {
-                        String[] nameArray = this.name.split(".");
+                        String[] nameArray = this.name.split("\\.");
                         this.type = nameArray[nameArray.length - 1];
                     } else {
                         this.type = "?";
@@ -131,7 +134,7 @@ public class Item{
                     this.createdDate = attribs.creationTime().toString();
                     this.lastModifiedDate = attribs.lastModifiedTime().toString();
                     this.size=String.valueOf(attribs.size());
-                    this.name=path.getFileName().toString();
+
                     this.isHidden = Files.isHidden(path);
                     this.isReadable = Files.isReadable(path);
                     this.isWritable = Files.isWritable(path);
@@ -160,10 +163,6 @@ public class Item{
 
     @Override
     public String toString() {
-        try {
-            return path.getFileName().toString();
-        } catch (NullPointerException e) {
-            return path.toAbsolutePath().toString();
-        }
+        return this.name;
     }
 }
