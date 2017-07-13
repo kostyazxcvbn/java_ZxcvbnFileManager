@@ -46,7 +46,6 @@ public class MainController extends Application {
         if(MainController.primaryStage==null){
             MainController.primaryStage = primaryStage;
         }
-
     }
 
     public static void main(String[] args) {
@@ -57,7 +56,6 @@ public class MainController extends Application {
     public void start(Stage primaryStage) {
 
         Stage startStage = new Stage(StageStyle.UNDECORATED);;
-
 
         setPrimaryStage(primaryStage);
         setThreadLogicUIPool(Executors.newCachedThreadPool());

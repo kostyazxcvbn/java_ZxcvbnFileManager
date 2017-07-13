@@ -25,4 +25,5 @@ public interface IFileManager {
     Map<Item, ItemConflicts> moveItemsTo(HashSet<Item> items, Item destination, boolean isSourceWillBeDeleted);
     Map<Item, ItemConflicts> pasteItemsFromBuffer(Item destination);
     void setConflictListener(IConflictListener conflictListener);
+    Item getParentItem(Item child);
 }

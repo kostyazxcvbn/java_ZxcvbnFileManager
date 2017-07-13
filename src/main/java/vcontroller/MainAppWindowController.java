@@ -2,14 +2,11 @@ package vcontroller;
 
 import interfaces.IFileManager;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -18,9 +15,10 @@ import model.Item;
 
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Predicate;
 
 import static model.AppEnums.*;
-import static vcontroller.ItemViewFactory.FxOptimizedItem;
+import static vcontroller.ItemViewFactory.FXOptimizedItem;
 
 
 /**
@@ -33,11 +31,11 @@ public class MainAppWindowController{
     public TreeView treevItemsTree;
     public TableView tablevDirContent;
     public Button toolbCopy;
-
     public Button toolbCut;
     public Button toolbPaste;
     public Button toolbDelete;
     public Button toolbRename;
+    public Button toolbUp;
     public ToggleButton toolbShowHiddenItems;
     public TableColumn columnItemImage;
     public TableColumn columnName;
@@ -48,34 +46,34 @@ public class MainAppWindowController{
     public TableColumn columnAttributes;
 
     private IFileManager fileManager;
-    private TreeItem<Item>parentItem;
-    private HashSet<Item>selectedItems;
+    private FXOptimizedItem parentItem;
+    private ObservableList<FXOptimizedItem> selectedItemsList;
     private ExecutorService threadLogicUIPool;
 
     private class ItemContentLoader extends Task<Void>{
         ImageView tempImageView;
-        TreeItem<Item> item;
+        FXOptimizedItem item;
+        boolean isIconChanging;
 
-        public ItemContentLoader(ImageView tempImageView, TreeItem<Item> item) {
+
+        public ItemContentLoader(ImageView tempImageView, FXOptimizedItem item, boolean isItemChanging) {
             this.tempImageView = tempImageView;
             this.item=item;
+            this.isIconChanging=isItemChanging;
         }
 
         @Override
         protected Void call() throws Exception {
-            Platform.runLater(() -> item.setGraphic(ItemViewFactory.getItemWaiting()));
 
-            if(!selectedItems.isEmpty()){
+            ObservableList<FXOptimizedItem> innerItemsInView = tablevDirContent.getItems();
+            Platform.runLater(()->innerItemsInView.clear());
 
-                ObservableList<FxOptimizedItem> innerItemsInView = tablevDirContent.getItems();
-                innerItemsInView.clear();
-
-                for (Item cuttentItem : selectedItems) {
-                    Platform.runLater(() -> innerItemsInView.add(ItemViewFactory.getNewfxOptimizedItem(cuttentItem)));
-                }
+            if(!selectedItemsList.isEmpty()){
+                    Platform.runLater(() -> innerItemsInView.addAll(selectedItemsList));
             }
-
-            Platform.runLater(() -> item.setGraphic(tempImageView));
+            if (isIconChanging) {
+                Platform.runLater(() -> item.setGraphic(tempImageView));
+            }
             return null;
         }
     }
@@ -89,16 +87,13 @@ public class MainAppWindowController{
 
         fileManager=FileManagerImpl.getInstance();
         threadLogicUIPool=MainController.getThreadLogicUIPool();
+        selectedItemsList= FXCollections.observableArrayList();
 
         initButtons();
         initItemsTree();
         initItemContentView();
-
-        loadParentDirectoriesInTree(parentItem,selectedItems);
-        getItemContent(parentItem);
-
-
-
+        loadChildrenDirectoriesInTree(parentItem, selectedItemsList);
+        getItemContent(parentItem, true);
     }
 
 
@@ -107,40 +102,54 @@ public class MainAppWindowController{
     }
 
     private void initItemsTree() {
-
+        HashSet<Item> selectedItems=null;
         parentItem=ItemViewFactory.getRoot();
-        treevItemsTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        selectedItems = (HashSet)fileManager.getContent(parentItem.getValue());
         treevItemsTree.setRoot(parentItem);
+        treevItemsTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        try {
+            selectedItems = (HashSet<Item>)fileManager.getContent(parentItem.getValue());
+        } catch (NullPointerException e) {
+            onUnavaibleItemHandler();
+        }
+        for (Item selectedItem : selectedItems) {
+            selectedItemsList.add(new FXOptimizedItem(selectedItem));
+        }
     }
 
-    private void getItemContent(TreeItem<Item> item) {
+    private void getItemContent(FXOptimizedItem item, boolean isIconChanging) {
 
-        ImageView tempImageViewLink = (ImageView)item.getGraphic();
-        ImageView tempImageView = tempImageViewLink;
-        item.setGraphic(ItemViewFactory.getItemWaiting());
+        ImageView tempImageView=null;
 
+        if (isIconChanging) {
+            ImageView tempImageViewLink = (ImageView)item.getGraphic();
+            tempImageView = tempImageViewLink;
+            item.setGraphic(ItemViewFactory.getItemWaiting());
+        }
 
-        ItemContentLoader contentLoader = new ItemContentLoader(tempImageView, item);
+        ItemContentLoader contentLoader = new ItemContentLoader(tempImageView, item, true);
         threadLogicUIPool.execute(contentLoader);
-
     }
 
-    private void loadParentDirectoriesInTree(TreeItem<Item> parentItem, HashSet<Item>selectedItems){
+    private void loadChildrenDirectoriesInTree(FXOptimizedItem parentItem, ObservableList<FXOptimizedItem>selectedItemsList){
 
-        ObservableList<TreeItem<Item>> childrenDirectories =  parentItem.getChildren();
+        ObservableList<TreeItem<Item>> childrenDirectories =parentItem.getChildren();
         childrenDirectories.clear();
 
         Task<Void> subdirectoriesLoader = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                for (Item item : selectedItems) {
-                    if(item.isDirectory()){
-                        Platform.runLater(() -> childrenDirectories.add(ItemViewFactory.getTreeItem(item)));
+
+                for (FXOptimizedItem item : selectedItemsList) {
+                    if (item.isDirectory()) {
+                        childrenDirectories.add(new FXOptimizedItem(item.getItem()));
                     }
                 }
-                Platform.runLater(() -> parentItem.getChildren().sort((o1, o2) ->
-                        (o1.getValue().getPath().toAbsolutePath().toString().compareTo(o2.getValue().getPath().toAbsolutePath().toString()))));
+                Platform.runLater(() -> {
+
+                });
+
+                Platform.runLater(() -> parentItem.getChildren().sort((o1,  o2) ->
+                        (o1.getValue().getName().compareTo(o2.getValue().getName()))));
                 return null;
             }
         };
@@ -163,6 +172,7 @@ public class MainAppWindowController{
                 Image imageToolbRename=new Image(getClass().getResourceAsStream("/img/iconRename.png"));
                 Image imageToolbPaste=new Image(getClass().getResourceAsStream("/img/iconPaste.png"));
                 Image imageToolbShowHiddenItems=new Image(getClass().getResourceAsStream("/img/iconHide.png"));
+                Image imageToolbUp=new Image(getClass().getResourceAsStream("/img/iconLevelUp.png"));
 
                 Platform.runLater(new Runnable() {
                     @Override
@@ -173,6 +183,7 @@ public class MainAppWindowController{
                         toolbRename.setGraphic(new ImageView(imageToolbRename));
                         toolbPaste.setGraphic(new ImageView(imageToolbPaste));
                         toolbShowHiddenItems.setGraphic(new ImageView(imageToolbShowHiddenItems));
+                        toolbUp.setGraphic(new ImageView(imageToolbUp));
                     }
                 });
 
@@ -184,11 +195,11 @@ public class MainAppWindowController{
 
     public void loadItemContent(MouseEvent mouseEvent) {
 
-        TreeItem<Item> tempSelectedLink=parentItem;
-        TreeItem<Item> tempSelected=tempSelectedLink;
+        FXOptimizedItem tempSelectedLink=parentItem;
+        FXOptimizedItem tempSelected=tempSelectedLink;
 
         try {
-            parentItem=(TreeItem<Item>)treevItemsTree.getSelectionModel().getSelectedItem();
+            parentItem=(FXOptimizedItem) treevItemsTree.getSelectionModel().getSelectedItem();
 
         } catch (NullPointerException e) {
             return;
@@ -196,9 +207,21 @@ public class MainAppWindowController{
 
         parentItem=(parentItem==null)?tempSelected:parentItem;
 
-        selectedItems = (HashSet)fileManager.getContent(parentItem.getValue());
-        loadParentDirectoriesInTree(parentItem,selectedItems);
-        getItemContent(parentItem);
+        HashSet<Item> selectedItems=null;
+
+        try {
+            selectedItems = (HashSet<Item>)fileManager.getContent(parentItem.getValue());
+            selectedItemsList.clear();
+            for (Item selectedItem : selectedItems) {
+                selectedItemsList.add(new FXOptimizedItem(selectedItem));
+            }
+        } catch (ClassCastException e) {
+            onUnavaibleItemHandler();
+            selectedItemsList.clear();
+            parentItem.setGraphic(ItemViewFactory.getDirectoryUnavaible());
+        }
+        loadChildrenDirectoriesInTree(parentItem, selectedItemsList);
+        getItemContent(parentItem, true);
 
     }
     public void closeApp(ActionEvent actionEvent) {
@@ -238,6 +261,56 @@ public class MainAppWindowController{
     }
 
     public void showAboutInfo(ActionEvent actionEvent) {
+
+    }
+    public void onItemsListClick(MouseEvent mouseEvent) {
+        if(mouseEvent.getClickCount()==2){
+            FXOptimizedItem selectedInList;
+            HashSet<Item> selectedItems;
+
+            try {
+                selectedInList = (FXOptimizedItem)tablevDirContent.getSelectionModel().getSelectedItem();
+            } catch (NullPointerException e) {
+                return;
+            }
+
+            if (selectedInList.isDirectory()) {
+                parentItem = selectedInList;
+
+                try {
+                    selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
+                    selectedItemsList.clear();
+                    for (Item selectedItem : selectedItems) {
+                        selectedItemsList.add(new FXOptimizedItem(selectedItem));
+                    }
+                } catch (ClassCastException e) {
+                    onUnavaibleItemHandler();
+                    parentItem.setGraphic(ItemViewFactory.getDirectoryUnavaible());
+                }
+
+                getItemContent(parentItem, true);
+            }
+        }
+    }
+
+    private void onUnavaibleItemHandler() {
+    }
+
+    public void getLevelUp(ActionEvent actionEvent) {
+
+        HashSet<Item> selectedItems;
+        parentItem=(parentItem.getValue().isRootStorage())?ItemViewFactory.getRoot():new FXOptimizedItem(fileManager.getParentItem(parentItem.getValue()));
+        try {
+            selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
+            selectedItemsList.clear();
+            for (Item selectedItem : selectedItems) {
+                selectedItemsList.add(new FXOptimizedItem(selectedItem));
+            }
+        } catch (ClassCastException e) {
+            onUnavaibleItemHandler();
+        }
+
+        getItemContent(parentItem, false);
 
     }
 }

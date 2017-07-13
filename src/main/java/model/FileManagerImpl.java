@@ -36,6 +36,14 @@ public class FileManagerImpl implements IFileManager{
     }
 
     @Override
+    public Item getParentItem(Item child) {
+        if (!child.isRootStorage()) {
+            return new Item(child.getPath().resolve(".."));
+        }
+        return null;
+    }
+
+    @Override
     public Map<Item, ItemConflicts> deleteItems(HashSet<Item> items) {
         Map<Item, ItemConflicts>notDeletedItems = new HashMap<>();
         for (Item item : items) {
@@ -93,7 +101,6 @@ public class FileManagerImpl implements IFileManager{
             try(DirectoryStream<Path> dirContent = Files.newDirectoryStream(source.getPath())) {
                 for (Path innerItem : dirContent) {
                     sourceContent.add(new Item(innerItem));
-
                 }
             } catch (Exception e) {
                 return Collections.EMPTY_SET;

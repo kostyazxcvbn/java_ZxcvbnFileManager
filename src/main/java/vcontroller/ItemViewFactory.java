@@ -1,11 +1,11 @@
 package vcontroller;
 
+import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import model.Item;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -13,7 +13,7 @@ import java.nio.file.Paths;
  */
 public final class ItemViewFactory {
 
-    private static TreeItem<Item> root;
+    private static FXOptimizedItem root;
 
     private static Image directoryUnavaible;
     private static Image  directoryHidden;
@@ -27,38 +27,48 @@ public final class ItemViewFactory {
     private static Image itemRoot;
     private static Image itemDrive;
 
-    public static class FxOptimizedItem {
+    public static class FXOptimizedItem extends TreeItem<Item>{
 
-        private ImageView icon;
-        private Item item;
-
-        public String getCreatedDate() {
-            return item.getCreatedDate();
+        public FXOptimizedItem(Item value, Node graphic) {
+            super(value, graphic);
         }
 
+        public FXOptimizedItem(Item value) {
+            super(value, getItemImageView(value));
+        }
+
+        public String getCreatedDate() {
+            return getValue().getCreatedDate();
+        }
+
+        public boolean isDirectory(){
+            return getValue().isDirectory();
+        }
+
+        public Item getItem() {
+            return getValue();
+        }
+
+
+
         public String getName() {
-            return item.getName();
+            return getValue().getName();
         }
 
         public String getType() {
-            return item.getType();
+            return getValue().getType();
         }
 
         public String getSize() {
-            return item.getSize();
+            return getValue().getSize();
         }
 
         public String getLastModifiedDate() {
-            return item.getLastModifiedDate();
-        }
-
-        public FxOptimizedItem(Item item) {
-            this.item=item;
-            icon = getItemImageView(item);
+            return getValue().getLastModifiedDate();
         }
 
         public ImageView getIcon() {
-            return icon;
+            return (ImageView)getGraphic();
         }
     }
 
@@ -125,9 +135,9 @@ public final class ItemViewFactory {
         return new TreeItem(item, getItemImageView(item));//TODO image from imageMap
     }
 
-    public static TreeItem<Item>getRoot(){
+    public static FXOptimizedItem getRoot(){
         if (root == null) {
-            root = new TreeItem(new Item(Paths.get("/root")), new ImageView(itemRoot));// TODO imagePath
+            root = new FXOptimizedItem(new Item(Paths.get("/root")), new ImageView(itemRoot));// TODO imagePath
         }
         return root;
     }
@@ -161,7 +171,11 @@ public final class ItemViewFactory {
         return new ImageView(itemWaiting);
     }
 
-    public static FxOptimizedItem getNewfxOptimizedItem(Item item){
-        return new FxOptimizedItem(item);
+    public static ImageView getDirectoryUnavaible() {
+        return new ImageView(directoryUnavaible);
+    }
+
+    public static FXOptimizedItem getNewfxOptimizedItem(Item item){
+        return new FXOptimizedItem(item, getItemImageView(item));
     }
 }
