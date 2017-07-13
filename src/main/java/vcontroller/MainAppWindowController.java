@@ -1,6 +1,8 @@
 package vcontroller;
 
+import interfaces.IContentChangedEventListener;
 import interfaces.IFileManager;
+import interfaces.IItemsTreeUpdatedEventListener;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -49,7 +51,20 @@ public class MainAppWindowController{
     private FXOptimizedItem parentItem;
     private ObservableList<FXOptimizedItem> selectedItemsList;
     private ExecutorService threadLogicUIPool;
+    //private GuiLogicLayer guiLogicLayer;
+/*
+    @Override
+    public void onItemContentChanged(FXOptimizedItem item) {
 
+    }
+/*
+    @Override
+    public void onUpdateItemsTree(FXOptimizedItem parentItem, ObservableList<FXOptimizedItem> selectedItemsList) {
+        selectedItemsList.add(new FXOptimizedItem(parentItem.getItem()));
+        //parentItem.getChildren().sort((o1,  o2) ->
+                        //(o1.getValue().getName().compareTo(o2.getValue().getName())));
+    }
+*/
     private class ItemContentLoader extends Task<Void>{
         ImageView tempImageView;
         FXOptimizedItem item;
@@ -62,6 +77,10 @@ public class MainAppWindowController{
             this.isIconChanging=isItemChanging;
         }
 
+        private int toInt(boolean value) {
+            return (value)?1:0;
+        }
+
         @Override
         protected Void call() throws Exception {
 
@@ -69,7 +88,17 @@ public class MainAppWindowController{
             Platform.runLater(()->innerItemsInView.clear());
 
             if(!selectedItemsList.isEmpty()){
-                    Platform.runLater(() -> innerItemsInView.addAll(selectedItemsList));
+                    Platform.runLater(() -> {
+                        innerItemsInView.addAll(selectedItemsList);
+                        innerItemsInView.sort((o1,o2)-> {
+                            int o1ToInt=toInt(o1.isDirectory());
+                            int o2ToInt=toInt(o2.isDirectory());
+                            if (o1ToInt == o2ToInt) {
+                                return o1.getName().toUpperCase().compareTo(o2.getName().toUpperCase());
+                            }
+                            return o2ToInt-o1ToInt;
+                        }) ;
+                    });
             }
             if (isIconChanging) {
                 Platform.runLater(() -> item.setGraphic(tempImageView));
@@ -86,12 +115,14 @@ public class MainAppWindowController{
     public void initialize(){
 
         fileManager=FileManagerImpl.getInstance();
+
         threadLogicUIPool=MainController.getThreadLogicUIPool();
         selectedItemsList= FXCollections.observableArrayList();
 
         initButtons();
         initItemsTree();
         initItemContentView();
+        //guiLogicLayer.updateItemsTree(parentItem,selectedItemsList);
         loadChildrenDirectoriesInTree(parentItem, selectedItemsList);
         getItemContent(parentItem, true);
     }
@@ -126,7 +157,7 @@ public class MainAppWindowController{
             item.setGraphic(ItemViewFactory.getItemWaiting());
         }
 
-        ItemContentLoader contentLoader = new ItemContentLoader(tempImageView, item, true);
+        ItemContentLoader contentLoader = new ItemContentLoader(tempImageView, item, isIconChanging);
         threadLogicUIPool.execute(contentLoader);
     }
 
@@ -144,9 +175,6 @@ public class MainAppWindowController{
                         childrenDirectories.add(new FXOptimizedItem(item.getItem()));
                     }
                 }
-                Platform.runLater(() -> {
-
-                });
 
                 Platform.runLater(() -> parentItem.getChildren().sort((o1,  o2) ->
                         (o1.getValue().getName().compareTo(o2.getValue().getName()))));
@@ -269,27 +297,32 @@ public class MainAppWindowController{
             HashSet<Item> selectedItems;
 
             try {
+
                 selectedInList = (FXOptimizedItem)tablevDirContent.getSelectionModel().getSelectedItem();
+
+
+
+                if (selectedInList.isDirectory()) {
+                    parentItem = selectedInList;
+
+                    try {
+                        selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
+                        selectedItemsList.clear();
+                        for (Item selectedItem : selectedItems) {
+                            selectedItemsList.add(new FXOptimizedItem(selectedItem));
+                        }
+                    } catch (ClassCastException e) {
+                        onUnavaibleItemHandler();
+                        parentItem.setGraphic(ItemViewFactory.getDirectoryUnavaible());
+                    }
+
+                    getItemContent(parentItem, true);
+                }
             } catch (NullPointerException e) {
                 return;
             }
 
-            if (selectedInList.isDirectory()) {
-                parentItem = selectedInList;
 
-                try {
-                    selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
-                    selectedItemsList.clear();
-                    for (Item selectedItem : selectedItems) {
-                        selectedItemsList.add(new FXOptimizedItem(selectedItem));
-                    }
-                } catch (ClassCastException e) {
-                    onUnavaibleItemHandler();
-                    parentItem.setGraphic(ItemViewFactory.getDirectoryUnavaible());
-                }
-
-                getItemContent(parentItem, true);
-            }
         }
     }
 
@@ -298,8 +331,14 @@ public class MainAppWindowController{
 
     public void getLevelUp(ActionEvent actionEvent) {
 
+        if (parentItem.equals(ItemViewFactory.getRoot())) {
+            return;
+        }
+
         HashSet<Item> selectedItems;
-        parentItem=(parentItem.getValue().isRootStorage())?ItemViewFactory.getRoot():new FXOptimizedItem(fileManager.getParentItem(parentItem.getValue()));
+
+        parentItem=ItemViewFactory.getParent(parentItem);
+
         try {
             selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
             selectedItemsList.clear();

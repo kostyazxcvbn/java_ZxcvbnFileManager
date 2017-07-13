@@ -37,10 +37,7 @@ public class FileManagerImpl implements IFileManager{
 
     @Override
     public Item getParentItem(Item child) {
-        if (!child.isRootStorage()) {
-            return new Item(child.getPath().resolve(".."));
-        }
-        return null;
+            return new Item(child.getPath().resolve("..").normalize());
     }
 
     @Override
@@ -95,7 +92,7 @@ public class FileManagerImpl implements IFileManager{
         if (source.getName().equals("root")) {
             File[] roots = File.listRoots();
             for (File root : roots) {
-                sourceContent.add(new Item(root.toPath(), true));
+                sourceContent.add(new Item(root.toPath()));
             }
         } else {
             try(DirectoryStream<Path> dirContent = Files.newDirectoryStream(source.getPath())) {

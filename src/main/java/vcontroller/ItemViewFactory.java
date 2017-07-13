@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import model.FileManagerImpl;
 import model.Item;
 
 import java.nio.file.Paths;
@@ -26,15 +27,20 @@ public final class ItemViewFactory {
     private static Image itemWaiting;
     private static Image itemRoot;
     private static Image itemDrive;
+    private static FileManagerImpl fileManager = FileManagerImpl.getInstance();
 
     public static class FXOptimizedItem extends TreeItem<Item>{
 
+        private ImageView itemIcon;
+/*
         public FXOptimizedItem(Item value, Node graphic) {
             super(value, graphic);
+            itemIcon =
         }
-
+*/
         public FXOptimizedItem(Item value) {
             super(value, getItemImageView(value));
+            itemIcon = getItemImageView(value);
         }
 
         public String getCreatedDate() {
@@ -68,7 +74,7 @@ public final class ItemViewFactory {
         }
 
         public ImageView getIcon() {
-            return (ImageView)getGraphic();
+            return itemIcon;
         }
     }
 
@@ -131,20 +137,25 @@ public final class ItemViewFactory {
         }
     }
 
-    public static TreeItem<Item> getTreeItem(Item item){
-        return new TreeItem(item, getItemImageView(item));//TODO image from imageMap
-    }
-
     public static FXOptimizedItem getRoot(){
         if (root == null) {
-            root = new FXOptimizedItem(new Item(Paths.get("/root")), new ImageView(itemRoot));// TODO imagePath
+            root = new FXOptimizedItem(new Item(Paths.get("/root")));// TODO imagePath
         }
         return root;
     }
+/*
+    private static FXOptimizedItem getRootClone() {
+        return new FXOptimizedItem(new Item(Paths.get("/root")), new ImageView(itemRoot));
+    }
+    */
 
     public static ImageView getItemImageView(Item item){
 
         try {
+            if (item.isRoot()) {
+                return new ImageView(itemRoot);
+            }
+
             if (!item.isRootStorage()) {
                 if(!item.isAvailable()){
                     return(item.isDirectory())?new ImageView(directoryUnavaible):new ImageView(fileUnavaible);
@@ -154,17 +165,12 @@ public final class ItemViewFactory {
                 }
                 if(!item.isHidden()) {
                     return (item.isDirectory()) ? new ImageView(directoryNormal):new ImageView(fileNormal);
-
                 }
-            }else{
-                return new ImageView(itemDrive);
             }
+            return new ImageView(itemDrive);
         } catch (Exception e) {
             return new ImageView();
         }
-
-
-        return new ImageView();
     }
 
     public static ImageView getItemWaiting() {
@@ -176,6 +182,18 @@ public final class ItemViewFactory {
     }
 
     public static FXOptimizedItem getNewfxOptimizedItem(Item item){
-        return new FXOptimizedItem(item, getItemImageView(item));
+        return new FXOptimizedItem(item);
+    }
+
+    public static FXOptimizedItem getParent(FXOptimizedItem item) {
+        if (isRootStorage(item)){
+            return getRoot();
+        }
+        return new FXOptimizedItem(fileManager.getParentItem(item.getValue()));
+
+    }
+
+    private static boolean isRootStorage(FXOptimizedItem item) {
+        return item.getValue().isRootStorage();
     }
 }

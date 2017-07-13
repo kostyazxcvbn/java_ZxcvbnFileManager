@@ -24,17 +24,12 @@ public class Item{
     private boolean isDirectory;
     private boolean isAvailable;
     private boolean isRootStorage;
+    private boolean isRoot;
 
     public Item(Path path) {
         this.path = path;
         this.isAvailable=true;
-        initAttributes(path);
-    }
-
-    public Item(Path path, boolean isRootStorage) {
-        this.path = path;
-        this.isAvailable=true;
-        this.isRootStorage = isRootStorage;
+        this.isRootStorage = (path.getParent()==null)?true:false;
         initAttributes(path);
     }
 
@@ -53,6 +48,10 @@ public class Item{
     public boolean isDirectory() {
 
         return isDirectory;
+    }
+
+    public boolean isRoot() {
+        return isRoot;
     }
 
     public boolean isWritable() {
@@ -94,6 +93,7 @@ public class Item{
         if(path.startsWith("/root")){
             this.name=path.getFileName().toString();
             this.isDirectory=true;
+            this.isRoot=true;
         }
         else{
             BasicFileAttributes attribs = null;
@@ -107,7 +107,7 @@ public class Item{
 
                     this.createdDate = attribs.creationTime().toString();
                     this.lastModifiedDate = attribs.lastModifiedTime().toString();
-                    this.size=String.valueOf(attribs.size());
+                    this.size="";
                     this.name=path.getFileName().toString();
                     this.isHidden = Files.isHidden(path);
                     this.isReadable = Files.isReadable(path);
@@ -133,7 +133,7 @@ public class Item{
 
                     this.createdDate = attribs.creationTime().toString();
                     this.lastModifiedDate = attribs.lastModifiedTime().toString();
-                    this.size=String.valueOf(attribs.size());
+                    this.size=String.valueOf(attribs.size())+" B ";
 
                     this.isHidden = Files.isHidden(path);
                     this.isReadable = Files.isReadable(path);
@@ -148,7 +148,6 @@ public class Item{
 
 
     };
-
 
     @Override
     public int hashCode() {
