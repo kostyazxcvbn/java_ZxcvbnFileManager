@@ -28,6 +28,7 @@ public class FileManagerImpl implements IFileManager{
 
     private FileManagerImpl() {
         onConflictResultTasksPool =Executors.newCachedThreadPool();
+        copiedItemsBuffer = new HashSet<>();
     }
 
     @Override
@@ -113,7 +114,7 @@ public class FileManagerImpl implements IFileManager{
     }
 
     @Override
-    public Map<Item, ItemConflicts> copyItemsToBuffer(HashSet<Item> items) {
+    public Map<Item, ItemConflicts> copyItemsToBuffer(Collection<Item> items) {
 
         Item source=null;
 

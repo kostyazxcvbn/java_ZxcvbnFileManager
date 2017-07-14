@@ -13,11 +13,14 @@ import javafx.event.EventHandler;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
 import model.FileManagerImpl;
 import model.Item;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
@@ -108,6 +111,7 @@ public class MainAppWindowController{
 
         @Override
         protected Void call() throws Exception {
+
             ObservableList<TreeItem<Item>> childrenDirectories =parentItem.getChildren();
             childrenDirectories.clear();
 
@@ -119,7 +123,7 @@ public class MainAppWindowController{
                 }
             }
             parentItem.getChildren().sort((o1,  o2) ->
-                    (o1.getValue().getName().compareTo(o2.getValue().getName())));
+                    (o1.getValue().getName().toUpperCase().compareTo(o2.getValue().getName().toUpperCase())));
             countDownLatch.countDown();
             return null;
         }
@@ -188,7 +192,6 @@ public class MainAppWindowController{
         });
 
         threadLogicUIPool.execute(appViewRefresher);
-        threadLogicUIPool.shutdown();
     }
 
     private void initItemContentView() {
@@ -329,7 +332,16 @@ public class MainAppWindowController{
     }
 
     public void copyItems(ActionEvent actionEvent) {
+        ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
+        HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
 
+        for (FXOptimizedItem selectedItem : selectedItems) {
+            itemsCollection.add(selectedItem.getItem());
+        }
+        Map<Item, ItemConflicts> operationErrorsMap = fileManager.copyItemsToBuffer(itemsCollection);
+        if (operationErrorsMap.isEmpty()) {
+            onItemsLoadingErrorHandler();
+        }
     }
 
     public void cutItems(ActionEvent actionEvent) {
@@ -356,12 +368,19 @@ public class MainAppWindowController{
         appViewRefresher.addListener(new IRefresher() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
+                threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList, countDownLatch));
+            }
+        });
+
+        appViewRefresher.addListener(new IRefresher() {
+            @Override
+            public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
             }
         });
 
-        threadLogicUIPool.execute(appViewRefresher);
 
+        threadLogicUIPool.execute(appViewRefresher);
     }
 
     public void copyItemsTo(ActionEvent actionEvent) {
@@ -369,6 +388,10 @@ public class MainAppWindowController{
     }
 
     public void moveItemsTo(ActionEvent actionEvent) {
+
+    }
+
+    public void showTableViewContextMenu(ContextMenuEvent contextMenuEvent) {
 
     }
 

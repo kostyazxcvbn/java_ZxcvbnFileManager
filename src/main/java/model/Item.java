@@ -109,7 +109,7 @@ public class Item{
                     this.lastModifiedDate = attribs.lastModifiedTime().toString();
                     this.size="";
                     this.name=path.getFileName().toString();
-                    this.isHidden = Files.isHidden(path);
+                    this.isHidden = path.toFile().isHidden();
                     this.isReadable = Files.isReadable(path);
                     this.isWritable = Files.isWritable(path);
                 }
@@ -118,6 +118,7 @@ public class Item{
                     this.name =path.toAbsolutePath().toString();
                     this.size ="";
                     this.createdDate="";
+                    this.isHidden = false;
                     this.lastModifiedDate="";
                 }
                 if (!isDirectory()) {
@@ -133,9 +134,9 @@ public class Item{
 
                     this.createdDate = attribs.creationTime().toString();
                     this.lastModifiedDate = attribs.lastModifiedTime().toString();
-                    this.size=String.valueOf(attribs.size())+" B ";
+                    this.size=String.valueOf(attribs.size())+" B";
 
-                    this.isHidden = Files.isHidden(path);
+                    this.isHidden = path.toFile().isHidden();
                     this.isReadable = Files.isReadable(path);
                     this.isWritable = Files.isWritable(path);
                 }

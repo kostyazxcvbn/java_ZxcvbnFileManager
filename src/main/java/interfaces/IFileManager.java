@@ -3,6 +3,7 @@ package interfaces;
 
 import model.Item;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -20,7 +21,7 @@ public interface IFileManager {
     Item createFile(String path, String newName);
     Item createDirectory(String path, String newNam);
     Set<Item> getContent(Item source);
-    Map<Item, ItemConflicts> copyItemsToBuffer(HashSet<Item> items);
+    Map<Item, ItemConflicts> copyItemsToBuffer(Collection<Item> items);
     Map<Item, ItemConflicts> cutItemsToBuffer(HashSet<Item> items);
     Map<Item, ItemConflicts> moveItemsTo(HashSet<Item> items, Item destination, boolean isSourceWillBeDeleted);
     Map<Item, ItemConflicts> pasteItemsFromBuffer(Item destination);
