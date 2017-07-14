@@ -1,6 +1,9 @@
-package vcontroller;
+package controllers;
 
+import javafx.application.Platform;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import model.FileManagerImpl;
@@ -87,9 +90,6 @@ public final class FileManagerItemsFactory {
         private boolean isRootStorage() {
             return getValue().isRootStorage();
         }
-
-
-
     }
 
     static{
@@ -166,6 +166,9 @@ public final class FileManagerItemsFactory {
             }
 
             if (!item.isRootStorage()) {
+                if (item.isCutted()) {
+                    return(item.isDirectory())?new ImageView(directoryCutted):new ImageView(fileCutted);
+                }
                 if(!item.isAvailable()){
                     return(item.isDirectory())?new ImageView(directoryUnavaible):new ImageView(fileUnavaible);
                 }
@@ -173,7 +176,7 @@ public final class FileManagerItemsFactory {
                     return(item.isDirectory())?new ImageView(directoryHidden):new ImageView(fileHidden);
                 }
                 if(!item.isHidden()) {
-                    return (item.isDirectory()) ? new ImageView(directoryNormal):new ImageView(fileNormal);
+                    return (item.isDirectory()) ? new ImageView(directoryNormal): new ImageView(fileNormal);
                 }
             }
             return new ImageView(itemDrive);
@@ -185,8 +188,26 @@ public final class FileManagerItemsFactory {
     public static ImageView getItemWaiting() {
         return new ImageView(itemWaiting);
     }
+    public static ImageView getDirectoryCutted() {return new ImageView(directoryCutted);}
+    public static ImageView getFileCutted() {return new ImageView(fileCutted);}
     public static ImageView getDirectoryUnavaible() {
         return new ImageView(directoryUnavaible);
+    }
+    public static void updateIcon(Object itemsContainer, FXOptimizedItem item, ImageView icon) {
+        if (itemsContainer instanceof TreeView) {
+            Platform.runLater(()->item.setGraphic(icon));
+        }
+        if (itemsContainer instanceof TableView) {
+            item.setIcon(icon);
+            Platform.runLater(() ->{
+                item.setGraphic(icon);
+                ((TableView)itemsContainer).refresh();
+            });
+        }
+        if (itemsContainer == null) {
+            return;
+        }
+
     }
 
     public static FXOptimizedItem getNewfxOptimizedItem(Item item){

@@ -27,4 +27,5 @@ public interface IFileManager {
     Map<Item, ItemConflicts> pasteItemsFromBuffer(Item destination);
     void setConflictListener(IConflictListener conflictListener);
     Item getParentItem(Item child);
+    Set<Item> getBuffer();
 }

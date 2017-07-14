@@ -1,6 +1,4 @@
-package vcontroller;
-
-import javafx.scene.control.TableColumn;
+package controllers;
 
 /**
  * Created by kostyazxcvbn on 08.07.2017.

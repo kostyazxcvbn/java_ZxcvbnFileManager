@@ -25,12 +25,20 @@ public class Item{
     private boolean isAvailable;
     private boolean isRootStorage;
     private boolean isRoot;
+    private boolean isCutted;
 
     public Item(Path path) {
         this.path = path;
         this.isAvailable=true;
         this.isRootStorage = (path.getParent()==null)?true:false;
         initAttributes(path);
+        if (FileManagerImpl.getInstance().getBuffer().contains(this) && FileManagerImpl.getInstance().isCutOperation() ) {
+            isCutted=true;
+        }
+    }
+
+    public boolean isCutted() {
+        return isCutted;
     }
 
     public boolean isRootStorage() {
@@ -152,13 +160,13 @@ public class Item{
 
     @Override
     public int hashCode() {
-        return path.hashCode();
+        return path.toString().hashCode();
     }
 
 
     @Override
     public boolean equals(Object obj) {
-        return (this.hashCode()==obj.hashCode());
+        return (this.getPath().toString().equals(((Item)obj).getPath().toString()));
     }
 
     @Override

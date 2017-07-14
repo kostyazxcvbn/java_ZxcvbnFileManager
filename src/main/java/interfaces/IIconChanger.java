@@ -1,11 +1,12 @@
 package interfaces;
 
-import static vcontroller.FileManagerItemsFactory.*;
+import javafx.scene.image.ImageView;
+
+import static controllers.FileManagerItemsFactory.*;
 
 /**
  * Created by user on 14.07.2017.
  */
 public interface IIconChanger {
-    void changeWaiting(FXOptimizedItem item);
-    void changeNormal(FXOptimizedItem item);
+    void updateIcon(Object itemsContainer, FXOptimizedItem item, ImageView icon);
 }

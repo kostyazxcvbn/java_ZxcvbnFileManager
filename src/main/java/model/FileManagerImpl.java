@@ -31,6 +31,10 @@ public class FileManagerImpl implements IFileManager{
         copiedItemsBuffer = new HashSet<>();
     }
 
+    protected boolean isCutOperation() {
+        return isCutOperation;
+    }
+
     @Override
     public void setConflictListener(IConflictListener conflictListener) {
         this.conflictListener = conflictListener;
@@ -114,9 +118,12 @@ public class FileManagerImpl implements IFileManager{
     }
 
     @Override
-    public Map<Item, ItemConflicts> copyItemsToBuffer(Collection<Item> items) {
+    public HashSet<Item> getBuffer() {
+        return copiedItemsBuffer;
+    }
 
-        Item source=null;
+    @Override
+    public Map<Item, ItemConflicts> copyItemsToBuffer(Collection<Item> items) {
 
         isCutOperation=false;
         copiedItemsBuffer.clear();
@@ -125,10 +132,12 @@ public class FileManagerImpl implements IFileManager{
 
         for (Item item : items) {
             if (Files.exists(item.getPath())) {
-                copiedItemsBuffer.add(item);
-                if (source == null) {
-                    source=new Item(item.getPath().getParent());
-                }
+                if (item.isRootStorage() || item.isRoot()) {
+                    notCopiedItems.put(item,ItemConflicts.ITEM_IS_NOT_COPIED);
+                } else {
+                    copiedItemsBuffer.add(item);
+            }
+
             }
             else{
                 notCopiedItems.put(item,ItemConflicts.ITEM_NOT_FOUND);

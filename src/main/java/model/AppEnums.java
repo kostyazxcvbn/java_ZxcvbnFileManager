@@ -19,6 +19,7 @@ public class AppEnums {
         FATAL_APP_ERROR,
         CANT_CREATE_ITEM,
         SECURITY_ERROR,
-        ITEM_EXISTS
+        ITEM_EXISTS,
+        ITEM_IS_NOT_COPIED
     }
 }

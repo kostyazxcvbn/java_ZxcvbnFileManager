@@ -1,4 +1,4 @@
-package vcontroller;/**
+package controllers;/**
  * Created by kostyazxcvbn on 09.07.2017.
  */
 

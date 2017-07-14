@@ -1,15 +1,12 @@
-package vcontroller;
+package controllers;
 
 import interfaces.IFileManager;
-import interfaces.IIconChanger;
 import interfaces.IRefresher;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -18,14 +15,13 @@ import javafx.scene.input.MouseEvent;
 import model.FileManagerImpl;
 import model.Item;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import static model.AppEnums.*;
-import static vcontroller.FileManagerItemsFactory.FXOptimizedItem;
+import static controllers.FileManagerItemsFactory.FXOptimizedItem;
 
 
 /**
@@ -57,9 +53,6 @@ public class MainAppWindowController{
     private ObservableList<FXOptimizedItem> selectedItemsList;
     private ExecutorService threadLogicUIPool;
     private boolean showHiddenItemsState;
-
-    private IIconChanger iconChangerInTree;
-    private IIconChanger iconChangerInTableView;
 
     private class ItemContentLoader extends Task<Void>{
 
@@ -141,42 +134,11 @@ public class MainAppWindowController{
         threadLogicUIPool=MainController.getThreadLogicUIPool();
         selectedItemsList= FXCollections.observableArrayList();
 
-        iconChangerInTree = new IIconChanger() {
-            @Override
-            public void changeWaiting(FXOptimizedItem item) {
-                Platform.runLater(() -> item.setGraphic(FileManagerItemsFactory.getItemWaiting()));
-            }
-
-            @Override
-            public void changeNormal(FXOptimizedItem item) {
-                Platform.runLater(() -> item.setGraphic(item.getIcon()));
-            }
-        };
-
-        iconChangerInTableView=new IIconChanger() {
-
-            ImageView tempIcon;
-
-            @Override
-            public void changeWaiting(FXOptimizedItem item) {
-                ImageView tempLink=item.getIcon();
-                tempIcon = tempLink;
-                item.setIcon(FileManagerItemsFactory.getItemWaiting());
-                tablevDirContent.refresh();
-            }
-
-            @Override
-            public void changeNormal(FXOptimizedItem item) {
-                item.setIcon(tempIcon);
-                tablevDirContent.refresh();
-            }
-        };
-
         initButtons();
         initItemsTree();
         initItemContentView();
 
-        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, iconChangerInTree);
+        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, treevItemsTree, 2000L);
         appViewRefresher.addListener(new IRefresher() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
@@ -251,9 +213,10 @@ public class MainAppWindowController{
 
     public void loadItemContent(MouseEvent mouseEvent) {
 
+        Object itemsContainer=treevItemsTree;
+
         FXOptimizedItem tempSelectedLink=parentItem;
         FXOptimizedItem tempSelected=tempSelectedLink;
-        IIconChanger treeArrayIconChanger = iconChangerInTree;
 
         try {
             parentItem=(FXOptimizedItem) treevItemsTree.getSelectionModel().getSelectedItem();
@@ -266,32 +229,11 @@ public class MainAppWindowController{
 
         if (parentItem == null) {
             parentItem=tempSelected;
-
-            treeArrayIconChanger=new IIconChanger() {
-                @Override
-                public void changeWaiting(FXOptimizedItem item) {
-                    return;
-                }
-
-                @Override
-                public void changeNormal(FXOptimizedItem item) {
-                    return;
-                }
-            };
+            itemsContainer=null;
         }
 
         if(!parentItem.isLeaf()){
-            treeArrayIconChanger=new IIconChanger() {
-                @Override
-                public void changeWaiting(FXOptimizedItem item) {
-                    return;
-                }
-
-                @Override
-                public void changeNormal(FXOptimizedItem item) {
-                    return;
-                }
-            };
+            itemsContainer=null;
         }
 
         HashSet<Item> selectedItems=null;
@@ -308,8 +250,7 @@ public class MainAppWindowController{
             parentItem.setGraphic(FileManagerItemsFactory.getDirectoryUnavaible());
         }
 
-
-        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, treeArrayIconChanger);
+        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, itemsContainer, 2000L);
         appViewRefresher.addListener(new IRefresher() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
@@ -332,6 +273,7 @@ public class MainAppWindowController{
     }
 
     public void copyItems(ActionEvent actionEvent) {
+
         ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
         HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
 
@@ -339,13 +281,71 @@ public class MainAppWindowController{
             itemsCollection.add(selectedItem.getItem());
         }
         Map<Item, ItemConflicts> operationErrorsMap = fileManager.copyItemsToBuffer(itemsCollection);
-        if (operationErrorsMap.isEmpty()) {
+        if (!operationErrorsMap.isEmpty()) {
             onItemsLoadingErrorHandler();
         }
+
+        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
+
+        appViewRefresher.addListener(new IRefresher() {
+            @Override
+            public void refresh(CountDownLatch countDownLatch) {
+                threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
+            }
+        });
+
+        appViewRefresher.addListener(new IRefresher() {
+            @Override
+            public void refresh(CountDownLatch countDownLatch) {
+                threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
+            }
+        });
+
+        threadLogicUIPool.execute(appViewRefresher);
+
     }
 
     public void cutItems(ActionEvent actionEvent) {
 
+        ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
+        HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
+
+        for (FXOptimizedItem selectedItem : selectedItems) {
+            itemsCollection.add(selectedItem.getItem());
+        }
+        Map<Item, ItemConflicts> operationErrorsMap = fileManager.cutItemsToBuffer(itemsCollection);
+
+        if (!operationErrorsMap.isEmpty()) {
+            onItemsLoadingErrorHandler();
+        }
+
+        for (FXOptimizedItem selectedItem : selectedItems) {
+            if (!operationErrorsMap.containsKey(selectedItem.getItem())) {
+
+                FileManagerItemsFactory.updateIcon(
+                        tablevDirContent,
+                        selectedItem,
+                        (selectedItem.isDirectory())?FileManagerItemsFactory.getDirectoryCutted():FileManagerItemsFactory.getFileCutted());
+            }
+        }
+
+        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
+
+        appViewRefresher.addListener(new IRefresher() {
+            @Override
+            public void refresh(CountDownLatch countDownLatch) {
+                threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
+            }
+        });
+
+        appViewRefresher.addListener(new IRefresher() {
+            @Override
+            public void refresh(CountDownLatch countDownLatch) {
+                threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
+            }
+        });
+
+        threadLogicUIPool.execute(appViewRefresher);
     }
 
     public void pasteItems(ActionEvent actionEvent) {
@@ -363,7 +363,7 @@ public class MainAppWindowController{
     public void showHiddenItems(ActionEvent actionEvent) {
         showHiddenItemsState=cmiShowHiddenItems.isSelected();
 
-        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, iconChangerInTree);
+        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, treevItemsTree, 2000L);
 
         appViewRefresher.addListener(new IRefresher() {
             @Override
@@ -422,7 +422,7 @@ public class MainAppWindowController{
                     }
 
 
-                    AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, iconChangerInTableView);
+                    AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 2000L);
 
                     appViewRefresher.addListener(new IRefresher() {
                         @Override
@@ -437,8 +437,6 @@ public class MainAppWindowController{
             } catch (NullPointerException e) {
                 return;
             }
-
-
         }
     }
 
@@ -464,7 +462,7 @@ public class MainAppWindowController{
         } catch (ClassCastException e) {
             onUnavaibleItemHandler();
         }
-        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, iconChangerInTableView);
+        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 2000L);
 
         appViewRefresher.addListener(new IRefresher() {
             @Override
