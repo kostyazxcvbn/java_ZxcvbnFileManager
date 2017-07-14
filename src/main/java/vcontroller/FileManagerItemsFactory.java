@@ -1,6 +1,5 @@
 package vcontroller;
 
-import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -12,7 +11,7 @@ import java.nio.file.Paths;
 /**
  * Created by kostyazxcvbn on 10.07.2017.
  */
-public final class ItemViewFactory {
+public final class FileManagerItemsFactory {
 
     private static FXOptimizedItem root;
 
@@ -50,7 +49,9 @@ public final class ItemViewFactory {
             return getValue();
         }
 
-
+        public void setIcon(ImageView itemIcon) {
+            this.itemIcon = itemIcon;
+        }
 
         public String getName() {
             return getValue().getName();
@@ -62,6 +63,10 @@ public final class ItemViewFactory {
 
         public String getSize() {
             return getValue().getSize();
+        }
+
+        public boolean isHidden() {
+            return getValue().isHidden();
         }
 
         public String getLastModifiedDate() {
@@ -78,66 +83,69 @@ public final class ItemViewFactory {
             }
             return new FXOptimizedItem(fileManager.getParentItem(this.getItem()));
         }
+
         private boolean isRootStorage() {
             return getValue().isRootStorage();
         }
+
+
 
     }
 
     static{
         try {
 
-            directoryUnavaible=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemDirUnavaible.png")));
+            directoryUnavaible=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemDirUnavaible.png")));
         } catch (NullPointerException e) {
             directoryUnavaible=null;
         }
         try {
-            directoryHidden=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemDirHidden.png")));
+            directoryHidden=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemDirHidden.png")));
         } catch (Exception e) {
             directoryHidden=null;
         }
         try {
-            directoryCutted=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemDirCutted.png")));
+            directoryCutted=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemDirCutted.png")));
         } catch (Exception e) {
             directoryCutted=null;
         }
         try {
-            directoryNormal=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemDirNormal.png")));
+            directoryNormal=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemDirNormal.png")));
         } catch (Exception e) {
             directoryNormal=null;
         }
         try {
-            fileUnavaible=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemFileUnavaible.png")));
+            fileUnavaible=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemFileUnavaible.png")));
         } catch (Exception e) {
             fileUnavaible=null;
         }
         try {
-            fileHidden=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemFileHidden.png")));
+            fileHidden=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemFileHidden.png")));
         } catch (Exception e) {
             fileHidden=null;
         }
         try {
-            fileNormal=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemFileNormal.png")));
+            fileNormal=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemFileNormal.png")));
         } catch (Exception e) {
             fileNormal=null;
         }
         try {
-            fileCutted=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemFileCutted.png")));
+            fileCutted=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemFileCutted.png")));
         } catch (Exception e) {
             fileCutted=null;
         }
         try {
-            itemWaiting=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemWaiting.png")));
+            itemWaiting=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemWaiting.png")));
         } catch (Exception e) {
             itemWaiting=null;
         }
         try {
-            itemRoot=new Image((ItemViewFactory.class.getResourceAsStream("/img/itemRoot.png")));
+            itemRoot=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemRoot.png")));
         } catch (Exception e) {
             itemRoot=null;
         }
         try {
-            itemDrive =new Image((ItemViewFactory.class.getResourceAsStream("/img/itemDrive.png")));
+            itemDrive =new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemDrive.png")));
         } catch (Exception e) {
             itemDrive =null;
         }
@@ -149,11 +157,6 @@ public final class ItemViewFactory {
         }
         return root;
     }
-/*
-    private static FXOptimizedItem getRootClone() {
-        return new FXOptimizedItem(new Item(Paths.get("/root")), new ImageView(itemRoot));
-    }
-    */
 
     private static ImageView getItemImageView(Item item){
 
@@ -182,7 +185,6 @@ public final class ItemViewFactory {
     public static ImageView getItemWaiting() {
         return new ImageView(itemWaiting);
     }
-
     public static ImageView getDirectoryUnavaible() {
         return new ImageView(directoryUnavaible);
     }
