@@ -32,12 +32,7 @@ public final class ItemViewFactory {
     public static class FXOptimizedItem extends TreeItem<Item>{
 
         private ImageView itemIcon;
-/*
-        public FXOptimizedItem(Item value, Node graphic) {
-            super(value, graphic);
-            itemIcon =
-        }
-*/
+
         public FXOptimizedItem(Item value) {
             super(value, getItemImageView(value));
             itemIcon = getItemImageView(value);
@@ -76,6 +71,17 @@ public final class ItemViewFactory {
         public ImageView getIcon() {
             return itemIcon;
         }
+
+        public FXOptimizedItem getParentItem() {
+            if (isRootStorage()){
+                return getRoot();
+            }
+            return new FXOptimizedItem(fileManager.getParentItem(this.getItem()));
+        }
+        private boolean isRootStorage() {
+            return getValue().isRootStorage();
+        }
+
     }
 
     static{
@@ -149,7 +155,7 @@ public final class ItemViewFactory {
     }
     */
 
-    public static ImageView getItemImageView(Item item){
+    private static ImageView getItemImageView(Item item){
 
         try {
             if (item.isRoot()) {
@@ -183,17 +189,5 @@ public final class ItemViewFactory {
 
     public static FXOptimizedItem getNewfxOptimizedItem(Item item){
         return new FXOptimizedItem(item);
-    }
-
-    public static FXOptimizedItem getParent(FXOptimizedItem item) {
-        if (isRootStorage(item)){
-            return getRoot();
-        }
-        return new FXOptimizedItem(fileManager.getParentItem(item.getValue()));
-
-    }
-
-    private static boolean isRootStorage(FXOptimizedItem item) {
-        return item.getValue().isRootStorage();
     }
 }

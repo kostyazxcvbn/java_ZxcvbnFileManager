@@ -51,20 +51,7 @@ public class MainAppWindowController{
     private FXOptimizedItem parentItem;
     private ObservableList<FXOptimizedItem> selectedItemsList;
     private ExecutorService threadLogicUIPool;
-    //private GuiLogicLayer guiLogicLayer;
-/*
-    @Override
-    public void onItemContentChanged(FXOptimizedItem item) {
 
-    }
-/*
-    @Override
-    public void onUpdateItemsTree(FXOptimizedItem parentItem, ObservableList<FXOptimizedItem> selectedItemsList) {
-        selectedItemsList.add(new FXOptimizedItem(parentItem.getItem()));
-        //parentItem.getChildren().sort((o1,  o2) ->
-                        //(o1.getValue().getName().compareTo(o2.getValue().getName())));
-    }
-*/
     private class ItemContentLoader extends Task<Void>{
         ImageView tempImageView;
         FXOptimizedItem item;
@@ -85,20 +72,18 @@ public class MainAppWindowController{
         protected Void call() throws Exception {
 
             ObservableList<FXOptimizedItem> innerItemsInView = tablevDirContent.getItems();
-            Platform.runLater(()->innerItemsInView.clear());
+            innerItemsInView.clear();
 
             if(!selectedItemsList.isEmpty()){
-                    Platform.runLater(() -> {
-                        innerItemsInView.addAll(selectedItemsList);
-                        innerItemsInView.sort((o1,o2)-> {
+                innerItemsInView.addAll(selectedItemsList);
+                innerItemsInView.sort((o1,o2)-> {
                             int o1ToInt=toInt(o1.isDirectory());
                             int o2ToInt=toInt(o2.isDirectory());
                             if (o1ToInt == o2ToInt) {
                                 return o1.getName().toUpperCase().compareTo(o2.getName().toUpperCase());
                             }
                             return o2ToInt-o1ToInt;
-                        }) ;
-                    });
+                        });
             }
             if (isIconChanging) {
                 Platform.runLater(() -> item.setGraphic(tempImageView));
@@ -122,7 +107,6 @@ public class MainAppWindowController{
         initButtons();
         initItemsTree();
         initItemContentView();
-        //guiLogicLayer.updateItemsTree(parentItem,selectedItemsList);
         loadChildrenDirectoriesInTree(parentItem, selectedItemsList);
         getItemContent(parentItem, true);
     }
@@ -175,9 +159,8 @@ public class MainAppWindowController{
                         childrenDirectories.add(new FXOptimizedItem(item.getItem()));
                     }
                 }
-
-                Platform.runLater(() -> parentItem.getChildren().sort((o1,  o2) ->
-                        (o1.getValue().getName().compareTo(o2.getValue().getName()))));
+                parentItem.getChildren().sort((o1,  o2) ->
+                        (o1.getValue().getName().compareTo(o2.getValue().getName())));
                 return null;
             }
         };
@@ -337,7 +320,7 @@ public class MainAppWindowController{
 
         HashSet<Item> selectedItems;
 
-        parentItem=ItemViewFactory.getParent(parentItem);
+        parentItem=parentItem.getParentItem();
 
         try {
             selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
@@ -348,8 +331,6 @@ public class MainAppWindowController{
         } catch (ClassCastException e) {
             onUnavaibleItemHandler();
         }
-
         getItemContent(parentItem, false);
-
     }
 }
