@@ -36,7 +36,7 @@
                   <items>
                     <MenuItem fx:id="miCopy" mnemonicParsing="false" onAction="#copyItems" text="Copy" />
                         <MenuItem fx:id="niCut" mnemonicParsing="false" onAction="#cutItems" text="Cut" />
-                        <MenuItem fx:id="miPaste" mnemonicParsing="false" onAction="#pasteItems" text="Paste" />
+                        <MenuItem fx:id="miPaste" mnemonicParsing="false" onAction="#pasteItems" text="Paste"/>
                         <MenuItem fx:id="miDelete" mnemonicParsing="false" onAction="#deleteItems" text="Delete" />
                         <SeparatorMenuItem mnemonicParsing="false" />
                       <MenuItem fx:id="miRename" mnemonicParsing="false" onAction="#renameItem" text="Rename" />
@@ -131,7 +131,7 @@
                                           <SeparatorMenuItem mnemonicParsing="false" />
                                         <MenuItem mnemonicParsing="false" text="Copy" />
                                           <MenuItem mnemonicParsing="false" text="Cut" />
-                                          <MenuItem mnemonicParsing="false" text="Paste" />
+                                          <MenuItem mnemonicParsing="false" text="Paste" onAction="#pasteItems" fx:id="contextmenuPaste"/>
                                           <MenuItem mnemonicParsing="false" text="Delete" />
                                           <SeparatorMenuItem mnemonicParsing="false" />
                                           <MenuItem mnemonicParsing="false" text="Rename" />

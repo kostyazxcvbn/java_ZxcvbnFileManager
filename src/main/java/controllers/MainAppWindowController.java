@@ -7,6 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -15,6 +16,7 @@ import javafx.scene.input.MouseEvent;
 import model.FileManagerImpl;
 import model.Item;
 
+import javax.swing.event.DocumentEvent;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -350,6 +352,37 @@ public class MainAppWindowController{
 
     public void pasteItems(ActionEvent actionEvent) {
 
+        FXOptimizedItem destinationFolder=parentItem;
+
+        if (actionEvent.getSource() instanceof MenuItem &&((MenuItem)actionEvent.getSource()).getId().equals("contextmenuPaste")) {
+            if (tablevDirContent.getSelectionModel().getSelectedItem()!=null){
+                destinationFolder = (FXOptimizedItem)tablevDirContent.getSelectionModel().getSelectedItem();
+            }
+        }
+
+        Map<Item, ItemConflicts> operationErrorsMap=fileManager.pasteItemsFromBuffer(destinationFolder.getItem());
+
+        if (!operationErrorsMap.isEmpty()) {
+            onItemsLoadingErrorHandler();
+        }
+
+        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
+
+        appViewRefresher.addListener(new IRefresher() {
+            @Override
+            public void refresh(CountDownLatch countDownLatch) {
+                threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
+            }
+        });
+
+        appViewRefresher.addListener(new IRefresher() {
+            @Override
+            public void refresh(CountDownLatch countDownLatch) {
+                threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
+            }
+        });
+
+
     }
 
     public void deleteItems(ActionEvent actionEvent) {
@@ -363,7 +396,7 @@ public class MainAppWindowController{
     public void showHiddenItems(ActionEvent actionEvent) {
         showHiddenItemsState=cmiShowHiddenItems.isSelected();
 
-        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, treevItemsTree, 2000L);
+        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, treevItemsTree, 0);
 
         appViewRefresher.addListener(new IRefresher() {
             @Override
@@ -388,10 +421,6 @@ public class MainAppWindowController{
     }
 
     public void moveItemsTo(ActionEvent actionEvent) {
-
-    }
-
-    public void showTableViewContextMenu(ContextMenuEvent contextMenuEvent) {
 
     }
 
@@ -462,7 +491,7 @@ public class MainAppWindowController{
         } catch (ClassCastException e) {
             onUnavaibleItemHandler();
         }
-        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 2000L);
+        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
 
         appViewRefresher.addListener(new IRefresher() {
             @Override

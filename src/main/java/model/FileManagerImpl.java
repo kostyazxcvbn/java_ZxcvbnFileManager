@@ -113,8 +113,9 @@ public class FileManagerImpl implements IFileManager{
 
     @Override
     public Map<Item, ItemConflicts> cutItemsToBuffer(HashSet<Item> items) {
+        Map<Item, ItemConflicts>notCopiedItems=copyItemsToBuffer(items);
         isCutOperation=true;
-        return copyItemsToBuffer(items);
+        return notCopiedItems;
     }
 
     @Override
@@ -268,11 +269,17 @@ public class FileManagerImpl implements IFileManager{
         if (Files.isDirectory(source)) {
             try {
                 Files.walkFileTree(source, new FileVisitor<Path>() {
-
+                    Path currentDest=dest;
                     @Override
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 
-                        Path newDir = dest.resolve(dir.getFileName());
+                        Path newDir=dest;
+
+                        if (!dir.toString().equals(source.toString())) {
+                            newDir = dest.resolve(dir.getFileName());
+                        }
+
+                        currentDest=newDir;
 
                         try {
                             if (!Files.exists(newDir)) {
@@ -287,7 +294,7 @@ public class FileManagerImpl implements IFileManager{
 
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        Path newFile = dest.resolve(file.getFileName());
+                        Path newFile = currentDest.resolve(file.getFileName());
                         try {
                             if (!Files.exists(newFile)) {
                                 Files.copy(file, newFile, StandardCopyOption.REPLACE_EXISTING);
@@ -317,7 +324,7 @@ public class FileManagerImpl implements IFileManager{
             }
         } else {
             try {
-                if (!Files.exists(source)) {
+                if (Files.exists(source)) {
                     if(isSourceWillBeDeleted){
                         Files.move(source, dest, StandardCopyOption.REPLACE_EXISTING);
                     }
