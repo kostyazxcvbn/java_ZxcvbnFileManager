@@ -1,7 +1,9 @@
 package model;
 
 import interfaces.IConflictListener;
+import interfaces.IConlictable;
 import interfaces.IFileManager;
+import interfaces.IRefreshingListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +14,7 @@ import java.util.concurrent.*;
 
 import static model.AppEnums.*;
 
-public class FileManagerImpl implements IFileManager{
+public class FileManagerImpl implements IFileManager, IConlictable{
     private static FileManagerImpl ourInstance = new FileManagerImpl();
 
     private HashSet<Item>copiedItemsBuffer;
@@ -344,7 +346,7 @@ public class FileManagerImpl implements IFileManager{
         Future<NameConflictState>nameConflictResult= onConflictResultTasksPool.submit(new Callable<NameConflictState>() {
             @Override
             public NameConflictState call() throws Exception {
-                return conflictListener.onConflict();
+                return notifyListener();
             }
         });
 
@@ -353,5 +355,23 @@ public class FileManagerImpl implements IFileManager{
         } catch (Exception e) {
             return NameConflictState.UNKNOWN;
         }
+    }
+
+    @Override
+    public void addListener(IConflictListener listener) {
+        conflictListener=listener;
+    }
+
+    @Override
+    public void removeListener() {
+        conflictListener=null;
+    }
+
+    @Override
+    public NameConflictState notifyListener() {
+        if (conflictListener == null) {
+            return null;
+        }
+        return conflictListener.onConflict();
     }
 }

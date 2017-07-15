@@ -1,22 +1,22 @@
 package controllers;
 
+import interfaces.IConflictListener;
+import interfaces.IConlictable;
 import interfaces.IFileManager;
-import interfaces.IRefresher;
+import interfaces.IRefreshingListener;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
+import model.AppEnums;
 import model.FileManagerImpl;
 import model.Item;
 
-import javax.swing.event.DocumentEvent;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -30,7 +30,7 @@ import static controllers.FileManagerItemsFactory.FXOptimizedItem;
  * Created by kostyazxcvbn on 06.07.2017.
  */
 
-public class MainAppWindowController{
+public class MainAppWindowController implements IConflictListener{
 
     public CheckMenuItem cmiShowHiddenItems;
     public TreeView treevItemsTree;
@@ -55,6 +55,16 @@ public class MainAppWindowController{
     private ObservableList<FXOptimizedItem> selectedItemsList;
     private ExecutorService threadLogicUIPool;
     private boolean showHiddenItemsState;
+
+    @Override
+    public NameConflictState onConflict() {
+        showOnItemNameConflictWindow();
+        return null;
+    }
+
+    private void showOnItemNameConflictWindow() {
+        
+    }
 
     private class ItemContentLoader extends Task<Void>{
 
@@ -124,14 +134,10 @@ public class MainAppWindowController{
         }
     }
 
-
-    public NameConflictState onConflict() {
-        return null;
-    }
-
     public void initialize(){
 
         fileManager=FileManagerImpl.getInstance();
+        ((IConlictable)fileManager).addListener(this);
 
         threadLogicUIPool=MainController.getThreadLogicUIPool();
         selectedItemsList= FXCollections.observableArrayList();
@@ -141,14 +147,14 @@ public class MainAppWindowController{
         initItemContentView();
 
         AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, treevItemsTree, 2000L);
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
             }
         });
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
@@ -253,14 +259,14 @@ public class MainAppWindowController{
         }
 
         AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, itemsContainer, 2000L);
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
             }
         });
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
@@ -289,14 +295,14 @@ public class MainAppWindowController{
 
         AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
             }
         });
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
@@ -333,14 +339,14 @@ public class MainAppWindowController{
 
         AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
             }
         });
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
@@ -368,14 +374,14 @@ public class MainAppWindowController{
 
         AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
             }
         });
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
@@ -398,14 +404,14 @@ public class MainAppWindowController{
 
         AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, treevItemsTree, 0);
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList, countDownLatch));
             }
         });
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
@@ -453,7 +459,7 @@ public class MainAppWindowController{
 
                     AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 2000L);
 
-                    appViewRefresher.addListener(new IRefresher() {
+                    appViewRefresher.addListener(new IRefreshingListener() {
                         @Override
                         public void refresh(CountDownLatch countDownLatch) {
                             threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
@@ -493,7 +499,7 @@ public class MainAppWindowController{
         }
         AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
 
-        appViewRefresher.addListener(new IRefresher() {
+        appViewRefresher.addListener(new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
                 threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));

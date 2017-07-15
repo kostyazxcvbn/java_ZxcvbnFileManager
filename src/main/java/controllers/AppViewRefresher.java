@@ -13,7 +13,7 @@ import static controllers.FileManagerItemsFactory.*;
  * Created by kostyazxcvbn on 13.07.2017.
  */
 public class AppViewRefresher extends Task<Void> implements IRefreshed {
-    ArrayList<IRefresher> refreshers;
+    ArrayList<IRefreshingListener> refreshers;
     CountDownLatch countDownLatch;
     FXOptimizedItem item;
     Object itemContainer;
@@ -46,7 +46,7 @@ public class AppViewRefresher extends Task<Void> implements IRefreshed {
     }
 
     @Override
-    public void addListener(IRefresher listener) {
+    public void addListener(IRefreshingListener listener) {
         refreshers.add(listener);
     }
 
@@ -57,7 +57,7 @@ public class AppViewRefresher extends Task<Void> implements IRefreshed {
 
     @Override
     public void notifyListeners() {
-        for (IRefresher refresher : refreshers) {
+        for (IRefreshingListener refresher : refreshers) {
             refresher.refresh(countDownLatch);
         }
     }
