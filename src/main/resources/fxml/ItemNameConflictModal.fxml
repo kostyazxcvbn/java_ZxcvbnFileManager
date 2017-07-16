@@ -8,17 +8,20 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="BOTTOM_CENTER" fillWidth="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="150.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.MessageContainerModalController">
+<VBox alignment="BOTTOM_CENTER" fillWidth="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="160.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.ItemNameConflictModalController">
    <children>
-      <HBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="400.0" VBox.vgrow="NEVER">
+      <HBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" VBox.vgrow="NEVER">
          <children>
-            <ImageView fx:id="imgMessageContainerModal" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true" HBox.hgrow="NEVER">
+            <ImageView fx:id="imgMessageContainerModal" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true" HBox.hgrow="NEVER">
                <viewport>
                   <Rectangle2D height="50.0" width="50.0" />
                </viewport>
                <HBox.margin>
-                  <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
+                  <Insets left="10.0" top="10.0" />
                </HBox.margin>
+               <image>
+                  <Image url="@../img/windowWarning.png" />
+               </image>
             </ImageView>
             <Label text="A folder or a file with the same name already exists! Please choose next action for the item:" wrapText="true">
                <HBox.margin>
@@ -30,9 +33,9 @@
             </Label>
          </children>
       </HBox>
-      <VBox prefWidth="400.0" VBox.vgrow="ALWAYS">
+      <VBox prefWidth="300.0" VBox.vgrow="ALWAYS">
          <children>
-            <RadioButton mnemonicParsing="false" selected="true" text="replace existing">
+            <RadioButton mnemonicParsing="false" selected="true" text="replace existing" fx:id="radiobReplaceExisting">
                <VBox.margin>
                   <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                </VBox.margin>
@@ -40,22 +43,22 @@
                   <ToggleGroup fx:id="ConflictNameAction" />
                </toggleGroup>
             </RadioButton>
-            <RadioButton mnemonicParsing="false" text="don't replace existing" toggleGroup="$ConflictNameAction">
+            <RadioButton mnemonicParsing="false" text="don't replace existing" toggleGroup="$ConflictNameAction" fx:id="radiobNotReplaceExisting">
                <VBox.margin>
                   <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                </VBox.margin>
             </RadioButton>
          </children>
       </VBox>
-      <HBox prefWidth="400.0">
+      <HBox prefWidth="300.0">
          <children>
-            <CheckBox mnemonicParsing="false" text="for all items" HBox.hgrow="NEVER">
+            <CheckBox mnemonicParsing="false" text="for all items" HBox.hgrow="NEVER" fx:id="checkbForAllItems">
                <HBox.margin>
                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </HBox.margin>
             </CheckBox>
             <Pane HBox.hgrow="ALWAYS" />
-            <Button fx:id="buttonMessageContainerOk" alignment="CENTER" maxHeight="22.0" maxWidth="50.0" minHeight="22.0" minWidth="50.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="50.0" text="OK" HBox.hgrow="NEVER">
+            <Button fx:id="buttonOk" alignment="CENTER" maxHeight="22.0" maxWidth="50.0" minHeight="22.0" minWidth="50.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="50.0" text="OK" HBox.hgrow="NEVER" onAction="#onOKPressed">
                <HBox.margin>
                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </HBox.margin>

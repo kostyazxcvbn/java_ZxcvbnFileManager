@@ -1,6 +1,8 @@
 package controllers;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.css.SimpleStyleableObjectProperty;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -37,9 +39,8 @@ public final class FileManagerItemsFactory {
 
         public FXOptimizedItem(Item value) {
             super(value, getItemImageView(value));
-            itemIcon = getItemImageView(value);
+            itemIcon = getItemImageView(value);//TODO  SimpleObjectProperty
         }
-
         public String getCreatedDate() {
             return getValue().getCreatedDate();
         }
@@ -94,7 +95,6 @@ public final class FileManagerItemsFactory {
 
     static{
         try {
-
             directoryUnavaible=new Image((FileManagerItemsFactory.class.getResourceAsStream("/img/itemDirUnavaible.png")));
         } catch (NullPointerException e) {
             directoryUnavaible=null;

@@ -211,8 +211,49 @@ public class FileManagerImpl implements IFileManager, IConlictable{
     }
 
     @Override
+    public Map<Item, ItemConflicts> moveItemTo(Item source, Item destination, boolean isSourceWillBeDeleted, NameConflictState nameConflictState) {
+
+        Map<Item, ItemConflicts>notMovedItems = new HashMap<>(1);
+
+        Path newItem = destination.getPath().resolve(source.getPath().getFileName());
+
+        if (nameConflictState==NameConflictState.NO_CONFLICTS && Files.exists(newItem)){
+            nameConflictState=NameConflictState.UNKNOWN;
+        }
+        switch (nameConflictState) {
+            case NO_CONFLICTS:
+            case REPLACE_EXISTING_ALL:{
+                notMovedItems.putAll(moveWithReplace(source.getPath(),newItem,isSourceWillBeDeleted));
+                break;
+            }
+            case REPLACE_EXISTING:{
+                notMovedItems.putAll(moveWithReplace(source.getPath(),newItem,isSourceWillBeDeleted));
+                break;
+            }
+            case NOT_REPLACE:{
+                notMovedItems.put(source, ItemConflicts.ITEM_EXISTS);
+                break;
+            }
+            case UNKNOWN: {
+                return null;
+            }
+            case NOT_REPLACE_ALL:
+            default:{
+                notMovedItems.put(source, ItemConflicts.ITEM_EXISTS);
+                break;
+            }
+        }
+        return notMovedItems;
+    }
+
+    @Override
     public Map<Item,ItemConflicts> pasteItemsFromBuffer(Item destination) {
         return moveItemsTo(copiedItemsBuffer,destination,isCutOperation);
+    }
+
+    @Override
+    public Map<Item,ItemConflicts> pasteItemFromBuffer(Item source, Item destination, NameConflictState nameConflictState) {
+        return moveItemTo(source,destination,isCutOperation, nameConflictState);
     }
 
 
@@ -272,23 +313,22 @@ public class FileManagerImpl implements IFileManager, IConlictable{
             try {
                 Files.walkFileTree(source, new FileVisitor<Path>() {
                     Path currentDest=dest;
+                    Path newDir=null;
                     @Override
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 
-                        Path newDir=dest;
-
                         if (!dir.toString().equals(source.toString())) {
-                            newDir = dest.resolve(dir.getFileName());
+                            newDir = currentDest.resolve(dir.getFileName());
+                        }else{
+                            newDir = currentDest;
                         }
-
-                        currentDest=newDir;
 
                         try {
                             if (!Files.exists(newDir)) {
                                 Files.createDirectory(newDir);
                             }
                         } catch (IOException e) {
-                            notMovedItems.put(new Item(newDir), ItemConflicts.CANT_CREATE_ITEM);
+                            notMovedItems.put(new Item(currentDest), ItemConflicts.CANT_CREATE_ITEM);
                             return FileVisitResult.TERMINATE;
                         }
                         return FileVisitResult.CONTINUE;
@@ -301,6 +341,7 @@ public class FileManagerImpl implements IFileManager, IConlictable{
                             if (!Files.exists(newFile)) {
                                 Files.copy(file, newFile, StandardCopyOption.REPLACE_EXISTING);
                             }
+                            currentDest=newDir;
                         } catch (IOException e) {
                             notMovedItems.put(new Item(newFile), ItemConflicts.SECURITY_ERROR);
                         }

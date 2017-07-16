@@ -8,19 +8,31 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import model.AppEnums;
 import model.FileManagerImpl;
 import model.Item;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import static model.AppEnums.*;
 import static controllers.FileManagerItemsFactory.FXOptimizedItem;
@@ -56,14 +68,40 @@ public class MainAppWindowController implements IConflictListener{
     private ExecutorService threadLogicUIPool;
     private boolean showHiddenItemsState;
 
+    private FXMLLoader itemNameConflictModalLoader;
+    private Stage itemNameConflictModalStage;
+    private ItemNameConflictModalController itemNameConflictModalController;
+    private Parent itemNameConflictModalparent;
+
+    private Object lock;
+
     @Override
     public NameConflictState onConflict() {
-        showOnItemNameConflictWindow();
-        return null;
+
+        Platform.runLater(()->showOnItemNameConflictWindow());
+
+        Object lock = new Object();
+        NameConflictState nameConflictState=null;
+
+        itemNameConflictModalController.setWaitingResultLock(lock);
+
+        synchronized (lock) {
+            try {
+                lock.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return nameConflictState;
     }
 
     private void showOnItemNameConflictWindow() {
-        
+        MainController.setCurrentStage(itemNameConflictModalStage);
+        itemNameConflictModalStage.show();
+    }
+
+    private void onFatalErrorHandler() {
     }
 
     private class ItemContentLoader extends Task<Void>{
@@ -134,10 +172,70 @@ public class MainAppWindowController implements IConflictListener{
         }
     }
 
+    private class ItemPaster extends Task<Void> {
+
+        Map<Item, ItemConflicts> operationErrorsMap;
+        FXOptimizedItem destination;
+
+        public ItemPaster(FXOptimizedItem destination) {
+            this.operationErrorsMap = new HashMap<>();
+            this.destination=destination;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            Map<Item, ItemConflicts> operationError;
+            Set<Item> itemsBuffer = fileManager.getBuffer();
+
+            itemNameConflictModalController.setNameConflictState(NameConflictState.NO_CONFLICTS);
+
+            for (Item item : itemsBuffer) {
+                operationError=fileManager.pasteItemFromBuffer(item,destination.getItem(), itemNameConflictModalController.getNameConflictState());
+                if (operationError!= null) {
+                   operationErrorsMap.putAll(operationError);
+                }else{
+                    Platform.runLater(()->showOnItemNameConflictWindow());
+                    synchronized (lock) {
+                        lock.wait();
+                    }
+                    operationErrorsMap.putAll(fileManager.pasteItemFromBuffer(item,destination.getItem(), itemNameConflictModalController.getNameConflictState()));
+                }
+            }
+
+            if (!operationErrorsMap.isEmpty()) {
+                onItemsLoadingErrorHandler();
+            }
+
+            AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
+
+            appViewRefresher.addListener(new IRefreshingListener() {
+                @Override
+                public void refresh(CountDownLatch countDownLatch) {
+                    threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
+                }
+            });
+
+            appViewRefresher.addListener(new IRefreshingListener() {
+                @Override
+                public void refresh(CountDownLatch countDownLatch) {
+                    threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
+                }
+            });
+
+            threadLogicUIPool.execute(appViewRefresher);
+
+            return null;
+        }
+    }
+
+
     public void initialize(){
 
         fileManager=FileManagerImpl.getInstance();
         ((IConlictable)fileManager).addListener(this);
+
+        lock=new Object();
+        initItemNameConflictModal();
 
         threadLogicUIPool=MainController.getThreadLogicUIPool();
         selectedItemsList= FXCollections.observableArrayList();
@@ -162,6 +260,29 @@ public class MainAppWindowController implements IConflictListener{
         });
 
         threadLogicUIPool.execute(appViewRefresher);
+    }
+
+    private void initItemNameConflictModal() {
+        if (itemNameConflictModalLoader == null) {
+            itemNameConflictModalLoader = new FXMLLoader(getClass().getResource("/fxml/ItemNameConflictModal.fxml"));
+            itemNameConflictModalStage = new Stage();
+
+            try {
+                itemNameConflictModalparent = itemNameConflictModalLoader.load();
+            } catch (Exception e) {
+                onFatalErrorHandler();
+            }
+
+            Scene scene=new Scene(itemNameConflictModalparent);
+            itemNameConflictModalStage.setTitle("Please choose an action...");
+            itemNameConflictModalStage.setScene(scene);
+            itemNameConflictModalStage.sizeToScene();
+            itemNameConflictModalStage.setResizable(false);
+            itemNameConflictModalStage.initModality(Modality.WINDOW_MODAL);
+            itemNameConflictModalStage.initOwner(MainController.getPrimaryStage());
+            itemNameConflictModalController=itemNameConflictModalLoader.getController();
+            itemNameConflictModalController.setWaitingResultLock(lock);
+        }
     }
 
     private void initItemContentView() {
@@ -232,8 +353,6 @@ public class MainAppWindowController implements IConflictListener{
         } catch (NullPointerException e) {
             return;
         }
-
-
 
         if (parentItem == null) {
             parentItem=tempSelected;
@@ -366,6 +485,11 @@ public class MainAppWindowController implements IConflictListener{
             }
         }
 
+        ItemPaster itemPaster = new ItemPaster(destinationFolder);
+        threadLogicUIPool.execute(itemPaster);
+
+
+        /*
         Map<Item, ItemConflicts> operationErrorsMap=fileManager.pasteItemsFromBuffer(destinationFolder.getItem());
 
         if (!operationErrorsMap.isEmpty()) {
@@ -387,7 +511,7 @@ public class MainAppWindowController implements IConflictListener{
                 threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
             }
         });
-
+        */
 
     }
 

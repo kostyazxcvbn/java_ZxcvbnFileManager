@@ -25,6 +25,8 @@ public interface IFileManager {
     Map<Item, ItemConflicts> cutItemsToBuffer(HashSet<Item> items);
     Map<Item, ItemConflicts> moveItemsTo(HashSet<Item> items, Item destination, boolean isSourceWillBeDeleted);
     Map<Item, ItemConflicts> pasteItemsFromBuffer(Item destination);
+    Map<Item, ItemConflicts> moveItemTo(Item source, Item destination, boolean isSourceWillBeDeleted, NameConflictState nameConflictState);
+    Map<Item, ItemConflicts> pasteItemFromBuffer(Item source, Item destination, NameConflictState nameConflictState);
     void setConflictListener(IConflictListener conflictListener);
     Item getParentItem(Item child);
     Set<Item> getBuffer();

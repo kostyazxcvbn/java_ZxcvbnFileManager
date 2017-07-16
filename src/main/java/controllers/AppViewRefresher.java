@@ -12,7 +12,7 @@ import static controllers.FileManagerItemsFactory.*;
 /**
  * Created by kostyazxcvbn on 13.07.2017.
  */
-public class AppViewRefresher extends Task<Void> implements IRefreshed {
+public class AppViewRefresher extends Task<Void> implements IRefreshable {
     ArrayList<IRefreshingListener> refreshers;
     CountDownLatch countDownLatch;
     FXOptimizedItem item;
