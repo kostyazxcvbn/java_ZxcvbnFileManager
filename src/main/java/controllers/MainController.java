@@ -76,6 +76,5 @@ public class MainController extends Application {
         setCurrentStage(startStage);
         IController c=fxmlLoader.getController();
         c.init();
-
     }
 }

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="BOTTOM_CENTER" fillWidth="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="450.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.OperationsConflictModalController">
+   <children>
+      <VBox prefHeight="200.0" prefWidth="100.0">
+         <children>
+            <HBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="450.0" VBox.vgrow="NEVER">
+               <children>
+                  <ImageView fx:id="imgMessageContainerModal" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true" HBox.hgrow="NEVER">
+                     <viewport>
+                        <Rectangle2D height="50.0" width="50.0" />
+                     </viewport>
+                     <HBox.margin>
+                        <Insets left="10.0" top="10.0" />
+                     </HBox.margin>
+                     <image>
+                        <Image url="@../img/windowWarning.png" />
+                     </image>
+                  </ImageView>
+                  <Label text="Following conflicts were happened in the executing process:" wrapText="true">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
+                     </HBox.margin>
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+               </children>
+            </HBox>
+            <TableView fx:id="tablevItemsConflictContainer" prefWidth="430.0" VBox.vgrow="ALWAYS">
+              <columns>
+                <TableColumn fx:id="columnItemsWithConflicts" maxWidth="280.0" minWidth="-1.0" prefWidth="280.0" resizable="false" text="Items with conflicts" />
+                <TableColumn fx:id="columnDescription" maxWidth="150.0" minWidth="-1.0" prefWidth="150.0" resizable="false" text="Description" />
+              </columns>
+               <VBox.margin>
+                  <Insets left="10.0" right="10.0" top="5.0" />
+               </VBox.margin>
+            </TableView>
+         </children>
+      </VBox>
+      <FlowPane alignment="CENTER_RIGHT" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="450.0" rowValignment="BOTTOM" VBox.vgrow="NEVER">
+         <children>
+            <Button fx:id="buttonOk" alignment="CENTER" maxHeight="22.0" maxWidth="50.0" minHeight="22.0" minWidth="50.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="50.0" text="OK" onAction="#onOkPressed">
+               <FlowPane.margin>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </FlowPane.margin>
+            </Button>
+         </children>
+      </FlowPane>
+   </children>
+</VBox>

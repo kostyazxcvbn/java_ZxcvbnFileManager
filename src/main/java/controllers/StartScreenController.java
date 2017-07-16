@@ -3,6 +3,7 @@ package controllers;
 import interfaces.IController;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -18,7 +19,9 @@ import java.util.concurrent.*;
  */
 public class StartScreenController implements  IController{
 
-    public ProgressBar progbStartScreenLoading;
+    @FXML
+    private ProgressBar progbStartScreenLoading;
+
     private ExecutorService threadLogicUIPool;
 
     synchronized public void init() {
@@ -67,7 +70,6 @@ public class StartScreenController implements  IController{
         } catch (IOException e) {
             runAppFatalErrorHandler();
         }
-
         Scene scene=new Scene(root);
         stage.setTitle("The ZxcvbnFileNManager");
         stage.setScene(scene);

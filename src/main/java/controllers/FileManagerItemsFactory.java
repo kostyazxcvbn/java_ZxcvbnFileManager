@@ -31,6 +31,7 @@ public final class FileManagerItemsFactory {
     private static Image itemWaiting;
     private static Image itemRoot;
     private static Image itemDrive;
+
     private static FileManagerImpl fileManager = FileManagerImpl.getInstance();
 
     public static class FXOptimizedItem extends TreeItem<Item>{
@@ -51,6 +52,10 @@ public final class FileManagerItemsFactory {
 
         public Item getItem() {
             return getValue();
+        }
+
+        public String getAttributes() {
+            return getValue().getAttributes();
         }
 
         public void setIcon(ImageView itemIcon) {

@@ -36,7 +36,7 @@ public class AppViewRefresher extends Task<Void> implements IRefreshable {
 
         updateIcon(itemContainer, item, FileManagerItemsFactory.getItemWaiting());
 
-        //Thread.sleep(delayImitationMs);
+        Thread.sleep(delayImitationMs);
         notifyListeners();
         countDownLatch.await();
 

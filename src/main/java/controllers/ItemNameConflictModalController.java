@@ -2,9 +2,9 @@ package controllers;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.RadioButton;
-import javafx.stage.Stage;
 import model.AppEnums.NameConflictState;
 
 import java.util.concurrent.ExecutorService;
@@ -13,9 +13,13 @@ import java.util.concurrent.ExecutorService;
  * Created by kostyazxcvbn on 15.07.2017.
  */
 public class ItemNameConflictModalController {
-    public RadioButton radiobReplaceExisting;
-    public RadioButton radiobNotReplaceExisting;
-    public CheckBox checkbForAllItems;
+
+    @FXML
+    private RadioButton radiobReplaceExisting;
+    @FXML
+    private RadioButton radiobNotReplaceExisting;
+    @FXML
+    private CheckBox checkbForAllItems;
 
     private ExecutorService threadLogicUIPool;
     private Object lock;
@@ -27,7 +31,9 @@ public class ItemNameConflictModalController {
         nameConflictState=NameConflictState.NO_CONFLICTS;
     }
 
-    public void setNameConflictState(NameConflictState nameConflictState) {
+    public void init(NameConflictState nameConflictState) {
+        radiobNotReplaceExisting.setSelected(true);
+        checkbForAllItems.setSelected(false);
         this.nameConflictState = nameConflictState;
     }
 
@@ -70,6 +76,6 @@ public class ItemNameConflictModalController {
             }
         });
 
-        Platform.runLater(()->MainController.getCurrentStage().hide());
+        MainController.getCurrentStage().hide();
     }
 }

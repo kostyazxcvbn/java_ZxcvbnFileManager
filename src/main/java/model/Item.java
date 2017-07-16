@@ -18,6 +18,7 @@ public class Item{
     private String size;
     private String lastModifiedDate;
     private String createdDate;
+    private String attributes;
     private boolean isHidden;
     private boolean isWritable;
     private boolean isReadable;
@@ -31,6 +32,7 @@ public class Item{
         this.path = path;
         this.isAvailable=true;
         this.isRootStorage = (path.getParent()==null)?true:false;
+        this.attributes="?";
         initAttributes(path);
         if (FileManagerImpl.getInstance().getBuffer().contains(this) && FileManagerImpl.getInstance().isCutOperation() ) {
             isCutted=true;
@@ -62,14 +64,6 @@ public class Item{
         return isRoot;
     }
 
-    public boolean isWritable() {
-        return isWritable;
-    }
-
-    public boolean isReadable() {
-        return isReadable;
-    }
-
     public String getName() {
         return name;
     }
@@ -94,10 +88,8 @@ public class Item{
         return path;
     }
 
-
-
     private void initAttributes(Path path){
-
+        
         if(path.startsWith("/root")){
             this.name=path.getFileName().toString();
             this.isDirectory=true;
@@ -155,8 +147,17 @@ public class Item{
 
         }
 
+        StringBuilder attributes=new StringBuilder();
 
-    };
+        if (isAvailable){
+            if (isReadable) {
+                attributes.append('r');
+            }
+            if (isWritable)
+                attributes.append('w');
+        }
+        this.attributes=attributes.toString();
+    }
 
     @Override
     public int hashCode() {
@@ -172,5 +173,9 @@ public class Item{
     @Override
     public String toString() {
         return this.name;
+    }
+
+    public String getAttributes() {
+        return attributes;
     }
 }

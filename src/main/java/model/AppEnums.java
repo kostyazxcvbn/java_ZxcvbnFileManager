@@ -14,12 +14,23 @@ public class AppEnums {
     }
 
     public enum ItemConflicts {
-        ITEM_NOT_FOUND,
-        CANT_DELETE_ITEM,
-        FATAL_APP_ERROR,
-        CANT_CREATE_ITEM,
-        SECURITY_ERROR,
-        ITEM_EXISTS,
-        ITEM_IS_NOT_COPIED
+        ITEM_NOT_FOUND("Item not found."),
+        CANT_DELETE_ITEM("Can't delete the item."),
+        FATAL_APP_ERROR("Fatal application's error."),
+        CANT_CREATE_ITEM("Can't create the item."),
+        SECURITY_ERROR("Security error."),
+        ITEM_EXISTS("The Item already exists."),
+        ITEM_IS_NOT_COPIED("Can't copy the item.");
+
+        private String message;
+
+        ItemConflicts(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public String toString() {
+            return message;
+        }
     }
 }
