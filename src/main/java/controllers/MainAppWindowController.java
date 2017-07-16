@@ -1,9 +1,6 @@
 package controllers;
 
-import interfaces.IConflictListener;
-import interfaces.IConlictable;
-import interfaces.IFileManager;
-import interfaces.IRefreshingListener;
+import interfaces.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -72,6 +69,14 @@ public class MainAppWindowController implements IConflictListener{
     private Stage itemNameConflictModalStage;
     private ItemNameConflictModalController itemNameConflictModalController;
     private Parent itemNameConflictModalparent;
+
+    private FXMLLoader okCancelModalLoader;
+    private Stage okCancelModalStage;
+    private OkCancelModalController okCancelModalController;
+    private Parent okCancelModalparent;
+
+    private IWarningable actionOnDeleteItem;
+    private  IWarningable actionOnCloseApp;
 
     private Object lock;
 
@@ -236,6 +241,8 @@ public class MainAppWindowController implements IConflictListener{
 
         lock=new Object();
         initItemNameConflictModal();
+        initOkCancelModal();
+        initImpls();
 
         threadLogicUIPool=MainController.getThreadLogicUIPool();
         selectedItemsList= FXCollections.observableArrayList();
@@ -260,6 +267,74 @@ public class MainAppWindowController implements IConflictListener{
         });
 
         threadLogicUIPool.execute(appViewRefresher);
+    }
+
+    private void initImpls() {
+
+        actionOnCloseApp=new IWarningable() {
+            @Override
+            public void onButtonOkPressed(HashSet<Item>itemsCollection) {
+                onCloseAppHandler();
+            }
+        };
+
+
+        actionOnDeleteItem=new IWarningable() {
+            @Override
+            public void onButtonOkPressed(HashSet<Item>itemsCollection) {
+                Map<Item, ItemConflicts> operationErrorsMap = fileManager.deleteItems(itemsCollection);
+
+                if (!operationErrorsMap.isEmpty()) {
+                    onItemsLoadingErrorHandler();
+                }
+
+                AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
+
+                appViewRefresher.addListener(new IRefreshingListener() {
+                    @Override
+                    public void refresh(CountDownLatch countDownLatch) {
+                        threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
+                    }
+                });
+
+                appViewRefresher.addListener(new IRefreshingListener() {
+                    @Override
+                    public void refresh(CountDownLatch countDownLatch) {
+                        threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
+                    }
+                });
+
+                threadLogicUIPool.execute(appViewRefresher);
+
+            }
+        };
+
+
+    }
+
+    private void onCloseAppHandler() {
+    }
+
+    private void initOkCancelModal() {
+        if (okCancelModalLoader == null) {
+            okCancelModalLoader = new FXMLLoader(getClass().getResource("/fxml/OkCancelContainerModal.fxml"));
+            okCancelModalStage = new Stage();
+
+            try {
+                okCancelModalparent = okCancelModalLoader.load();
+            } catch (Exception e) {
+                onFatalErrorHandler();
+            }
+
+            Scene scene=new Scene(okCancelModalparent);
+            okCancelModalStage.setTitle("Warning!");
+            okCancelModalStage.setScene(scene);
+            okCancelModalStage.sizeToScene();
+            okCancelModalStage.setResizable(false);
+            okCancelModalStage.initModality(Modality.WINDOW_MODAL);
+            okCancelModalStage.initOwner(MainController.getPrimaryStage());
+            okCancelModalController=okCancelModalLoader.getController();
+        }
     }
 
     private void initItemNameConflictModal() {
@@ -487,36 +562,21 @@ public class MainAppWindowController implements IConflictListener{
 
         ItemPaster itemPaster = new ItemPaster(destinationFolder);
         threadLogicUIPool.execute(itemPaster);
-
-
-        /*
-        Map<Item, ItemConflicts> operationErrorsMap=fileManager.pasteItemsFromBuffer(destinationFolder.getItem());
-
-        if (!operationErrorsMap.isEmpty()) {
-            onItemsLoadingErrorHandler();
-        }
-
-        AppViewRefresher appViewRefresher=new AppViewRefresher(parentItem, tablevDirContent, 0);
-
-        appViewRefresher.addListener(new IRefreshingListener() {
-            @Override
-            public void refresh(CountDownLatch countDownLatch) {
-                threadLogicUIPool.execute(new SubdirectoriesLoader(parentItem, selectedItemsList,countDownLatch));
-            }
-        });
-
-        appViewRefresher.addListener(new IRefreshingListener() {
-            @Override
-            public void refresh(CountDownLatch countDownLatch) {
-                threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
-            }
-        });
-        */
-
     }
 
     public void deleteItems(ActionEvent actionEvent) {
 
+        ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
+        HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
+
+        for (FXOptimizedItem selectedItem : selectedItems) {
+            itemsCollection.add(selectedItem.getItem());
+        }
+
+        MainController.setCurrentStage(okCancelModalStage);
+
+        okCancelModalController.initWarningModal("Selected items will be deleted! Are you sure?",actionOnDeleteItem,itemsCollection);
+        okCancelModalStage.show();
     }
 
     public void renameItem(ActionEvent actionEvent) {
