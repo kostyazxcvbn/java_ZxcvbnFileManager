@@ -1,16 +1,11 @@
 package controllers;
 
-import interfaces.IWarningable;
-import javafx.application.Platform;
-import javafx.collections.ObservableList;
+import interfaces.IOkCancelHandler;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import model.FileManagerImpl;
 import model.Item;
-
-import static controllers.FileManagerItemsFactory.FXOptimizedItem;
 
 import java.util.HashSet;
 
@@ -26,14 +21,14 @@ public class OkCancelModalController {
     @FXML
     private Button buttonOk;
 
-    private IWarningable warningAction;
+    private IOkCancelHandler warningAction;
     HashSet<Item> selectedItems;
 
     public Button getButtonCancel() {
         return buttonCancel;
     }
 
-    public void initWarningModal(String message, IWarningable warningAction, HashSet<Item>selectedItems) {
+    public void initWarningModal(String message, IOkCancelHandler warningAction, HashSet<Item>selectedItems) {
         labelWarningMessage.setText(message);
         this.warningAction=warningAction;
         this.selectedItems=selectedItems;
@@ -45,7 +40,7 @@ public class OkCancelModalController {
             MainController.getThreadLogicUIPool().execute(new Runnable() {
                 @Override
                 public void run() {
-                    warningAction.onButtonOkPressed(selectedItems);
+                    warningAction.onButtonOkPressed(selectedItems, "");
                 }
             });
         }

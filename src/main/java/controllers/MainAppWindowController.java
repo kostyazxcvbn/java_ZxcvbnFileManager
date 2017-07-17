@@ -10,7 +10,6 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -38,6 +37,12 @@ import static controllers.FileManagerItemsFactory.FXOptimizedItem;
 
 public class MainAppWindowController implements IConflictListener {
 
+    @FXML
+    private Button toolbNewFolder;
+    @FXML
+    private MenuItem miNewFolder;
+    @FXML
+    private MenuItem contextNewFolder;
     @FXML
     private MenuItem contextBack;
     @FXML
@@ -110,13 +115,19 @@ public class MainAppWindowController implements IConflictListener {
     private OperationsConflictModalController operationsConflictModalController;
     private Parent operationsConflictModalparent;
 
-    private IWarningable actionOnDeleteItem;
-    private IWarningable actionOnCloseApp;
-    private IWarningable actionOnAboutInfo;
+    private FXMLLoader newFolderNameModalLoader;
+    private Stage newFolderNameModalStage;
+    private NewFolderNameModalController newFolderNameModalController;
+    private Parent newFolderNameModalparent;
+
+    private IOkCancelHandler actionOnDeleteItem;
+    private IOkCancelHandler actionOnCloseApp;
+    private IOkCancelHandler actionOnAboutInfo;
     private IRefreshingListener itemsTreeRefreshListener;
     private IRefreshingListener itemContentContainerListener;
 
     private Object lock;
+    private IOkCancelHandler actionOnCreateFolder;
 
     @Override
     public NameConflictState onConflict() {
@@ -136,6 +147,8 @@ public class MainAppWindowController implements IConflictListener {
 
         return nameConflictState;
     }
+
+
 
     //inner runnable subtasks
     private class ItemContentLoader extends Task<Void> {
@@ -182,13 +195,15 @@ public class MainAppWindowController implements IConflictListener {
         private boolean statePaste=false;
         private boolean stateDelete=false;
         private boolean stateBack=false;
+        private boolean stateCreate;
 
-        public GuiControlsStateSwitcher(boolean stateCopy, boolean stateCut, boolean statePaste, boolean stateDelete, boolean stateBack) {
+        public GuiControlsStateSwitcher(boolean stateCopy, boolean stateCut, boolean statePaste, boolean stateDelete, boolean stateBack, boolean stateCreate) {
             this.stateCopy = !stateCopy;
             this.stateCut = !stateCut;
             this.statePaste = !statePaste;
             this.stateDelete = !stateDelete;
             this.stateBack = !stateBack;
+            this.stateCreate =!stateCreate;
         }
 
         @Override
@@ -208,6 +223,10 @@ public class MainAppWindowController implements IConflictListener {
             Platform.runLater(()->toolbDelete.setDisable(stateDelete));
             Platform.runLater(()->contextDelete.setDisable(stateDelete));
             Platform.runLater(()->miDelete.setDisable(stateDelete));
+
+            Platform.runLater(()->toolbNewFolder.setDisable(stateCreate));
+            Platform.runLater(()->contextNewFolder.setDisable(stateCreate));
+            Platform.runLater(()->miNewFolder.setDisable(stateCreate));
 
             Platform.runLater(()->toolbUp.setDisable(stateBack));
             Platform.runLater(()->contextBack.setDisable(stateBack));
@@ -283,6 +302,49 @@ public class MainAppWindowController implements IConflictListener {
             }
 
             AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, tablevDirContent, 0);
+            appViewRefresher.addListener(itemsTreeRefreshListener);
+            appViewRefresher.addListener(itemContentContainerListener);
+            threadLogicUIPool.execute(appViewRefresher);
+
+            return null;
+        }
+    }
+
+    private class ItemCreator extends Task<Void> {
+
+        Map<Item, ItemConflicts> operationErrorsMap;
+        FXOptimizedItem destination;
+
+        public ItemCreator(FXOptimizedItem destination) {
+            this.operationErrorsMap = new HashMap<>();
+            this.destination = destination;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            Map<Item, ItemConflicts> operationError;
+            Set<Item> itemsBuffer = fileManager.getBuffer();
+
+            itemNameConflictModalController.init(NameConflictState.NO_CONFLICTS);
+
+            for (Item item : itemsBuffer) {
+                operationError = fileManager.pasteItemFromBuffer(item, destination.getItem(), itemNameConflictModalController.getNameConflictState());
+                if (operationError != null) {
+                    operationErrorsMap.putAll(operationError);
+                } else {
+                    Platform.runLater(() -> showModalWindow(itemNameConflictModalStage));
+                    synchronized (lock) {
+                        lock.wait();
+                    }
+                    operationErrorsMap.putAll(fileManager.pasteItemFromBuffer(item, destination.getItem(), itemNameConflictModalController.getNameConflictState()));
+                }
+            }
+
+            if (!operationErrorsMap.isEmpty()) {
+                onConflictsHandler(operationErrorsMap);
+            }
+
+            AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, tablevDirContent, 0);
 
             appViewRefresher.addListener(new IRefreshingListener() {
                 @Override
@@ -306,6 +368,8 @@ public class MainAppWindowController implements IConflictListener {
 
 
 
+
+
     //initialization's methods
     public void initialize() {
 
@@ -323,6 +387,7 @@ public class MainAppWindowController implements IConflictListener {
         initItemNameConflictModal();
         initOkCancelModal();
         initOperationsConflictModal();
+        initNewFolderNametModal();
 
         initItemsTree();
         initItemContentView();
@@ -381,18 +446,28 @@ public class MainAppWindowController implements IConflictListener {
 
     private void initImpls() {
 
-        actionOnCloseApp = new IWarningable() {
+        actionOnCloseApp = new IOkCancelHandler() {
             @Override
-            public void onButtonOkPressed(HashSet<Item> itemsCollection) {
+            public void onButtonOkPressed(HashSet<Item> itemsCollection, String path) {
                 onCloseAppHandler();
+
+            }
+
+            @Override
+            public void onButtonOkPressed(String destinationPath, String newFolderName) {
 
             }
         };
 
-        actionOnAboutInfo = new IWarningable() {
+        actionOnAboutInfo = new IOkCancelHandler() {
             @Override
-            public void onButtonOkPressed(HashSet<Item> itemsCollection) {
+            public void onButtonOkPressed(HashSet<Item> itemsCollection, String path) {
                 Platform.runLater(() -> MainController.getCurrentStage().hide());
+            }
+
+            @Override
+            public void onButtonOkPressed(String destinationPath, String newFolderName) {
+
             }
         };
 
@@ -410,9 +485,9 @@ public class MainAppWindowController implements IConflictListener {
             }
         };
 
-        actionOnDeleteItem = new IWarningable() {
+        actionOnDeleteItem = new IOkCancelHandler() {
             @Override
-            public void onButtonOkPressed(HashSet<Item> itemsCollection) {
+            public void onButtonOkPressed(HashSet<Item> itemsCollection, String path) {
                 Map<Item, ItemConflicts> operationErrorsMap = fileManager.deleteItems(itemsCollection);
 
                 if (!operationErrorsMap.isEmpty()) {
@@ -424,6 +499,36 @@ public class MainAppWindowController implements IConflictListener {
                 appViewRefresher.addListener(itemContentContainerListener);
 
                 threadLogicUIPool.execute(appViewRefresher);
+                Platform.runLater(() -> MainController.getCurrentStage().hide());
+
+            }
+
+            @Override
+            public void onButtonOkPressed(String destinationPath, String newFolderName) {
+
+            }
+        };
+
+        actionOnCreateFolder = new IOkCancelHandler() {
+            @Override
+            public void onButtonOkPressed(HashSet<Item> itemsCollection, String path) {
+
+            }
+
+            @Override
+            public void onButtonOkPressed(String destinationPath, String newFolderName) {
+                Map<Item, ItemConflicts> operationErrorsMap=new HashMap<>();
+                Item newDirectory = fileManager.createDirectory(destinationPath,newFolderName);
+                if (newDirectory == null) {
+                    operationErrorsMap.put(newDirectory, ItemConflicts.CANT_CREATE_ITEM);
+                    onConflictsHandler(operationErrorsMap);
+                }
+
+                AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, tablevDirContent, 0);
+                appViewRefresher.addListener(itemsTreeRefreshListener);
+                appViewRefresher.addListener(itemContentContainerListener);
+                threadLogicUIPool.execute(appViewRefresher);
+
                 Platform.runLater(() -> MainController.getCurrentStage().hide());
 
             }
@@ -494,6 +599,28 @@ public class MainAppWindowController implements IConflictListener {
             operationsConflictModalStage.initModality(Modality.WINDOW_MODAL);
             operationsConflictModalStage.initOwner(MainController.getPrimaryStage());
             operationsConflictModalController = operationsConflictModalLoader.getController();
+        }
+    }
+
+    private void initNewFolderNametModal() {
+        if (newFolderNameModalLoader == null) {
+            newFolderNameModalLoader = new FXMLLoader(getClass().getResource("/fxml/NewFolderNameModal.fxml"));
+            newFolderNameModalStage = new Stage();
+
+            try {
+                newFolderNameModalparent = newFolderNameModalLoader.load();
+            } catch (Exception e) {
+                onFatalErrorHandler();
+            }
+
+            Scene scene = new Scene(newFolderNameModalparent);
+            newFolderNameModalStage.setTitle("New folder...");
+            newFolderNameModalStage.setScene(scene);
+            newFolderNameModalStage.sizeToScene();
+            newFolderNameModalStage.setResizable(false);
+            newFolderNameModalStage.initModality(Modality.WINDOW_MODAL);
+            newFolderNameModalStage.initOwner(MainController.getPrimaryStage());
+            newFolderNameModalController = newFolderNameModalLoader.getController();
         }
     }
 
@@ -618,6 +745,7 @@ public class MainAppWindowController implements IConflictListener {
                 boolean stateDelete=false;
                 boolean stateBack=false;
                 boolean statePaste=false;
+                boolean stateCreate=false;
 
                 switch (guiControlsState) {
                     case ROOT_LEVEL:{
@@ -626,6 +754,7 @@ public class MainAppWindowController implements IConflictListener {
                         statePaste=false;
                         stateDelete=false;
                         stateBack=true;
+                        stateCreate=false;
                         break;
                     }
                     case NOTHING_SELECTED:
@@ -635,6 +764,7 @@ public class MainAppWindowController implements IConflictListener {
                         statePaste=(fileManager.getBuffer().isEmpty())?false:true;
                         stateDelete=false;
                         stateBack=true;
+                        stateCreate=true;
                         break;
                     }
                     case FILE_SELECTED:{
@@ -643,6 +773,7 @@ public class MainAppWindowController implements IConflictListener {
                         statePaste=false;
                         stateDelete=true;
                         stateBack=true;
+                        stateCreate=false;
                         break;
                     }
                     case FOLDER_SELECTED:{
@@ -651,6 +782,7 @@ public class MainAppWindowController implements IConflictListener {
                         statePaste=(fileManager.getBuffer().isEmpty())?false:true;
                         stateDelete=true;
                         stateBack=true;
+                        stateCreate=true;
                         break;
                     }
                     default:{
@@ -658,7 +790,7 @@ public class MainAppWindowController implements IConflictListener {
                     }
                 }
 
-                threadLogicUIPool.execute(new GuiControlsStateSwitcher(stateCopy,stateCut,statePaste,stateDelete,stateBack));
+                threadLogicUIPool.execute(new GuiControlsStateSwitcher(stateCopy,stateCut,statePaste,stateDelete,stateBack,stateCreate));
 
                 return null;
             }
@@ -790,7 +922,7 @@ public class MainAppWindowController implements IConflictListener {
 
         FXOptimizedItem destinationFolder = parentItem;
 
-        if (actionEvent.getSource() instanceof MenuItem && ((MenuItem) actionEvent.getSource()).getId().equals("contextmenuPaste")) {
+        if (actionEvent.getSource() instanceof MenuItem && ((MenuItem) actionEvent.getSource()).getId().equals("contextPaste")) {
             if (tablevDirContent.getSelectionModel().getSelectedItem() != null) {
                 destinationFolder = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
             }
@@ -869,6 +1001,19 @@ public class MainAppWindowController implements IConflictListener {
         appViewRefresher.addListener(itemsTreeRefreshListener);
         appViewRefresher.addListener(itemContentContainerListener);
         threadLogicUIPool.execute(appViewRefresher);
+    }
+
+    public void onCreateNewFolderPressed(ActionEvent actionEvent) {
+        FXOptimizedItem destinationFolder = parentItem;
+
+        if (actionEvent.getSource() instanceof MenuItem && ((MenuItem) actionEvent.getSource()).getId().equals("contextNewFolder")) {
+            if (tablevDirContent.getSelectionModel().getSelectedItem() != null) {
+                destinationFolder = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
+            }
+        }
+
+        newFolderNameModalController.init(destinationFolder, actionOnCreateFolder);
+        showModalWindow(newFolderNameModalStage);
     }
 
     //additional methods
