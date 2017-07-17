@@ -38,6 +38,8 @@ import static controllers.FileManagerItemsFactory.FXOptimizedItem;
 public class MainAppWindowController implements IConflictListener {
 
     @FXML
+    private Label labelParentPath;
+    @FXML
     private Button toolbNewFolder;
     @FXML
     private MenuItem miNewFolder;
@@ -183,6 +185,7 @@ public class MainAppWindowController implements IConflictListener {
                     return o2ToInt - o1ToInt;
                 });
             }
+            Platform.runLater(()->labelParentPath.setText((parentItem.getValue().isRoot()?"\\root":parentItem.getValue().getPath().toAbsolutePath().toString())));
             countDownLatch.countDown();
             return null;
         }
