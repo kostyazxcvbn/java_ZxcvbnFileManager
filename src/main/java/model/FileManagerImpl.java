@@ -258,7 +258,6 @@ public class FileManagerImpl implements IFileManager, IConlictable{
         return moveItemTo(source,destination,isCutOperation, nameConflictState);
     }
 
-
     private Map<Item, ItemConflicts> deleteDirectory(Path directory) {
 
         Map<Item, ItemConflicts> notDeletedItems = new HashMap<>(1);
@@ -313,55 +312,35 @@ public class FileManagerImpl implements IFileManager, IConlictable{
 
         if (Files.isDirectory(source)) {
             try {
-                Files.walkFileTree(source, new FileVisitor<Path>() {
-                    Path currentDest=dest;
-                    Path newDir=null;
+                Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
                     @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
 
-                        if (!dir.toString().equals(source.toString())) {
-                            newDir = currentDest.resolve(dir.getFileName());
-                        }else{
-                            newDir = currentDest;
-                        }
-
+                    {
+                        Path newDir = dest.resolve(source.relativize(dir));
                         try {
-                            if (!Files.exists(newDir)) {
-                                Files.createDirectory(newDir);
-                            }
+                            Files.copy(dir, newDir, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
-                            notMovedItems.put(new Item(currentDest), ItemConflicts.CANT_CREATE_ITEM);
+                            notMovedItems.put(new Item(newDir), ItemConflicts.CANT_CREATE_ITEM);
                             return FileVisitResult.TERMINATE;
                         }
                         return FileVisitResult.CONTINUE;
                     }
-
                     @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        Path newFile = currentDest.resolve(file.getFileName());
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    {
                         try {
-                            if (!Files.exists(newFile)) {
-                                Files.copy(file, newFile, StandardCopyOption.REPLACE_EXISTING);
-                            }
-                            currentDest=newDir;
+                            Files.copy(file, dest.resolve(source.relativize(file)),StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
-                            notMovedItems.put(new Item(newFile), ItemConflicts.SECURITY_ERROR);
+                            notMovedItems.put(new Item(dest), ItemConflicts.CANT_CREATE_ITEM);
+                            return FileVisitResult.TERMINATE;
                         }
                         return FileVisitResult.CONTINUE;
                     }
-
-                    @Override
-                    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                        return FileVisitResult.TERMINATE;
-                    }
-
-                    @Override
-                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                        return FileVisitResult.CONTINUE;
-                    }
                 });
+
             } catch (IOException e) {
-                notMovedItems.put(new Item(source), ItemConflicts.FATAL_APP_ERROR);
+                notMovedItems.put(new Item(source), ItemConflicts.CANT_CREATE_ITEM);
             }
 
             if (isSourceWillBeDeleted && notMovedItems.isEmpty()) {

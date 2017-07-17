@@ -133,7 +133,7 @@
                                         <MenuItem fx:id="contextCopy" mnemonicParsing="false" onAction="#copyItems" text="Copy" />
                                           <MenuItem fx:id="contextCut" mnemonicParsing="false" onAction="#cutItems" text="Cut" />
                                           <MenuItem fx:id="contextPaste" mnemonicParsing="false" onAction="#pasteItems" text="Paste" />
-                                          <MenuItem fx:id="contextDelete" mnemonicParsing="false" text="Delete" />
+                                          <MenuItem fx:id="contextDelete" mnemonicParsing="false" text="Delete" onAction="#deleteItems"/>
                                       </items>
                                     </ContextMenu>
                                  </contextMenu>

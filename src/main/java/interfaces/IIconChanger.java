@@ -2,7 +2,7 @@ package interfaces;
 
 import javafx.scene.image.ImageView;
 
-import static controllers.FileManagerItemsFactory.*;
+import static helpers.FileManagerItemsFactory.*;
 
 /**
  * Created by user on 14.07.2017.

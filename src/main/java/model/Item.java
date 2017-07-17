@@ -94,7 +94,7 @@ public class Item{
     private void initAttributes(Path path){
         boolean isWritable=false;
         boolean isReadable=false;
-        DateFormat formattedDate=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        DateFormat formattedDate=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         if(path.startsWith("/root")){
             this.name=path.getFileName().toString();

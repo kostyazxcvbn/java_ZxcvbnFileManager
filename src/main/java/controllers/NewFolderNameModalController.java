@@ -4,15 +4,12 @@ import interfaces.IOkCancelHandler;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 
-import java.util.HashSet;
 import java.util.regex.Pattern;
-import controllers.FileManagerItemsFactory.*;
-import model.Item;
+import helpers.FileManagerItemsFactory.*;
 
 /**
  * Created by user on 17.07.2017.
@@ -58,7 +55,6 @@ public class NewFolderNameModalController {
             MainController.getThreadLogicUIPool().execute(new Runnable() {
                 @Override
                 public void run() {
-
                     warningAction.onButtonOkPressed(destinationFolderPath, textfNewFoldername.getText());
                 }
             });

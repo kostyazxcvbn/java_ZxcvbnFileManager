@@ -1,6 +1,5 @@
 package controllers;
 
-import interfaces.IController;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -17,20 +16,19 @@ import java.util.concurrent.*;
 /**
  * Created by kostyazxcvbn on 06.07.2017.
  */
-public class StartScreenController implements  IController{
+public class StartScreenController {
 
     @FXML
     private ProgressBar progbStartScreenLoading;
 
     private ExecutorService threadLogicUIPool;
 
-    synchronized public void init() {
-        threadLogicUIPool=MainController.getThreadLogicUIPool();
+    public void init() {
         imitateLoading();
     }
 
-    private void imitateLoading() {
-
+    public void imitateLoading() {
+        threadLogicUIPool=MainController.getThreadLogicUIPool();
         Task<Void> loadingImitator = new Task<Void>() {
             @Override
             protected Void call() throws Exception {

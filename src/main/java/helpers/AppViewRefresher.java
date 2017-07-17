@@ -1,4 +1,4 @@
-package controllers;
+package helpers;
 
 import interfaces.*;
 import javafx.concurrent.Task;
@@ -7,19 +7,17 @@ import javafx.scene.image.ImageView;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 
-import static controllers.FileManagerItemsFactory.*;
-
 /**
  * Created by kostyazxcvbn on 13.07.2017.
  */
 public class AppViewRefresher extends Task<Void> implements IRefreshable {
     ArrayList<IRefreshingListener> refreshers;
     CountDownLatch countDownLatch;
-    FXOptimizedItem item;
+    FileManagerItemsFactory.FXOptimizedItem item;
     Object itemContainer;
     long delayImitationMs;
 
-    public AppViewRefresher(FXOptimizedItem item, Object itemContainer, long delayImitaionMs) {
+    public AppViewRefresher(FileManagerItemsFactory.FXOptimizedItem item, Object itemContainer, long delayImitaionMs) {
         this.refreshers = new ArrayList<>();
         this.item = item;
         this.itemContainer=itemContainer;
@@ -34,13 +32,13 @@ public class AppViewRefresher extends Task<Void> implements IRefreshable {
 
         this.countDownLatch = new CountDownLatch(refreshers.size());
 
-        updateIcon(itemContainer, item, FileManagerItemsFactory.getItemWaiting());
+        FileManagerItemsFactory.updateIcon(itemContainer, item, FileManagerItemsFactory.getItemWaiting());
 
         Thread.sleep(delayImitationMs);
         notifyListeners();
         countDownLatch.await();
 
-        updateIcon(itemContainer, item, tempIcon);
+        FileManagerItemsFactory.updateIcon(itemContainer, item, tempIcon);
 
         return null;
     }

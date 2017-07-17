@@ -1,7 +1,5 @@
 package interfaces;
 
-import controllers.FileManagerItemsFactory.FXOptimizedItem;
-import javafx.collections.ObservableList;
 import model.Item;
 
 import java.util.HashSet;

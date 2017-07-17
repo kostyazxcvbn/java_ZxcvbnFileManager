@@ -2,7 +2,6 @@ package controllers;/**
  * Created by kostyazxcvbn on 09.07.2017.
  */
 
-import interfaces.IController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -74,7 +73,7 @@ public class MainController extends Application {
         startStage.sizeToScene();
         startStage.show();
         setCurrentStage(startStage);
-        IController c=fxmlLoader.getController();
+        StartScreenController c=fxmlLoader.getController();
         c.init();
     }
 }

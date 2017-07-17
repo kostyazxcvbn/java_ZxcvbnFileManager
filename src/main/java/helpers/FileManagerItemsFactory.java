@@ -1,8 +1,6 @@
-package controllers;
+package helpers;
 
 import javafx.application.Platform;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.css.SimpleStyleableObjectProperty;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
