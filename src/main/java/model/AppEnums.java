@@ -33,4 +33,12 @@ public class AppEnums {
             return message;
         }
     }
+
+    public enum GuiControlsState {
+        ROOT_LEVEL,
+        EMPTY_CONTENT,
+        FILE_SELECTED,
+        NOTHING_SELECTED,
+        FOLDER_SELECTED
+    }
 }

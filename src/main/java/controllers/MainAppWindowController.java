@@ -8,6 +8,7 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -35,6 +36,24 @@ import static controllers.FileManagerItemsFactory.FXOptimizedItem;
 
 public class MainAppWindowController implements IConflictListener {
 
+    @FXML
+    private MenuItem contextBack;
+    @FXML
+    private MenuItem contextCopy;
+    @FXML
+    private MenuItem contextCut;
+    @FXML
+    private MenuItem contextDelete;
+    @FXML
+    private MenuItem contextPaste;
+    @FXML
+    private MenuItem miCopy;
+    @FXML
+    private MenuItem miCut;
+    @FXML
+    private MenuItem miDelete;
+    @FXML
+    private MenuItem miPaste;
     @FXML
     private CheckMenuItem cmiShowHiddenItems;
     @FXML
@@ -275,6 +294,7 @@ public class MainAppWindowController implements IConflictListener {
         appViewRefresher.addListener(itemContentContainerListener);
         ;
         threadLogicUIPool.execute(appViewRefresher);
+        guiControlsStateHandler(GuiControlsState.ROOT_LEVEL);
     }
 
     private void initButtons() {
@@ -282,6 +302,13 @@ public class MainAppWindowController implements IConflictListener {
         Task<Void> buttonsImageLoader = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
+
+                toolbCopy.setTooltip(new Tooltip("Copy item(s)"));
+                toolbCut.setTooltip(new Tooltip("Cut item(s)"));
+                toolbDelete.setTooltip(new Tooltip("Delete item(s)"));
+                toolbPaste.setTooltip(new Tooltip("Paste item(s)"));
+                toolbShowHiddenItems.setTooltip(new Tooltip("Show/hide hidden items"));
+                toolbUp.setTooltip(new Tooltip("Back"));
 
                 Image imageToolbCopy = new Image(getClass().getResourceAsStream("/img/iconCopy.png"));
                 Image imageToolbCut = new Image(getClass().getResourceAsStream("/img/iconCut.png"));
@@ -431,9 +458,8 @@ public class MainAppWindowController implements IConflictListener {
         parentItem = FileManagerItemsFactory.getRoot();
         treevItemsTree.setRoot(parentItem);
         treevItemsTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        try {
-            selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
-        } catch (NullPointerException e) {
+        selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
+        if (selectedItems.isEmpty()){
             Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
             operationErrorsMap.put(parentItem.getValue(),ItemConflicts.SECURITY_ERROR);
             onConflictsHandler(operationErrorsMap);
@@ -452,17 +478,109 @@ public class MainAppWindowController implements IConflictListener {
         modalWindowStage.show();
     }
 
-
     //handlers
     private void onCloseAppHandler() {
 
-        Platform.runLater(() -> {
-            MainController.getCurrentStage().close();
-            MainController.getPrimaryStage().close();
-        });
+        Platform.runLater(() -> MainController.getPrimaryStage().close());
 
         Platform.exit();
         System.exit(0);
+    }
+
+    private void guiControlsStateHandler(GuiControlsState guiControlsState) {
+        toolbCopy.setDisable(true);
+        toolbCut.setDisable(true);
+        toolbPaste.setDisable(true);
+        toolbDelete.setDisable(true);
+        Task<Void> guiControlsStateSwitcher = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+
+                boolean stateCopy=false;
+                boolean stateCut=false;
+                boolean statePaste=false;
+                boolean stateDelete=false;
+                boolean stateBack=false;
+
+                switch (guiControlsState) {
+                    case ROOT_LEVEL:{
+                        stateCopy=false;
+                        stateCut=false;
+                        statePaste=false;
+                        stateDelete=false;
+                        stateBack=true;
+                        break;
+                    }
+                    case NOTHING_SELECTED:
+                    case EMPTY_CONTENT:{
+                        stateCopy=false;
+                        stateCut=false;
+                        statePaste=true;
+                        stateDelete=false;
+                        stateBack=true;
+                        break;
+                    }
+                    case FILE_SELECTED:{
+                        stateCopy=true;
+                        stateCut=true;
+                        statePaste=false;
+                        stateDelete=true;
+                        stateBack=true;
+                        break;
+                    }
+                    case FOLDER_SELECTED:{
+                        stateCopy=true;
+                        stateCut=true;
+                        statePaste=true;
+                        stateDelete=true;
+                        stateBack=true;
+                        break;
+                    }
+                    default:{
+                        break;
+                    }
+                }
+
+
+
+
+
+
+                /*
+
+
+
+                Platform.runLater(() ->{
+
+                    toolbCopy.setDisable(!stateCopy);
+                    contextCopy.setDisable(!stateCopy);
+                    miCopy.setDisable(!stateCopy);
+
+                    toolbCut.setDisable(!stateCut);
+                    contextCut.setDisable(!stateCut);
+                    miCut.setDisable(!stateCut);
+
+                    toolbPaste.setDisable(!statePaste);
+                    contextPaste.setDisable(!statePaste);
+                    miPaste.setDisable(!statePaste);
+
+                    toolbDelete.setDisable(!stateDelete);
+                    contextDelete.setDisable(!stateDelete);
+                    miDelete.setDisable(!stateDelete);
+
+                    toolbUp.setDisable(!stateBack);
+                    contextBack.setDisable(!stateBack)
+
+                });
+
+                */
+                return null;
+            }
+        };
+
+        threadLogicUIPool.execute(guiControlsStateSwitcher);
+
+
     }
 
     private void onConflictsHandler(Map<Item, ItemConflicts> operationErrorsMap) {
@@ -509,7 +627,7 @@ public class MainAppWindowController implements IConflictListener {
             for (Item selectedItem : selectedItems) {
                 selectedItemsList.add(new FXOptimizedItem(selectedItem));
             }
-        } catch (ClassCastException e) {
+        } catch (Exception e) {
             Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
             operationErrorsMap.put(parentItem.getValue(),ItemConflicts.SECURITY_ERROR);
             onConflictsHandler(operationErrorsMap);
@@ -645,7 +763,7 @@ public class MainAppWindowController implements IConflictListener {
                         for (Item selectedItem : selectedItems) {
                             selectedItemsList.add(new FXOptimizedItem(selectedItem));
                         }
-                    } catch (ClassCastException e) {
+                    } catch (Exception e) {
                         Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
                         operationErrorsMap.put(parentItem.getValue(),ItemConflicts.SECURITY_ERROR);
                         onConflictsHandler(operationErrorsMap);

@@ -54,7 +54,7 @@
             </MenuBar>
             <ToolBar minHeight="40.0" minWidth="800.0" prefHeight="40.0" prefWidth="1000.0">
               <items>
-                <Button fx:id="toolbCopy" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#copyItems" prefHeight="32.0" prefWidth="32.0" text="Copy" />
+                <Button fx:id="toolbCopy" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#copyItems" prefHeight="32.0" prefWidth="32.0" text="Copy"/>
                   <Button fx:id="toolbCut" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#cutItems" prefHeight="32.0" prefWidth="32.0" text="Cut" />
                   <Button fx:id="toolbPaste" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#pasteItems" prefHeight="32.0" prefWidth="32.0" text="Edit" />
                   <Button fx:id="toolbDelete" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#deleteItems" prefHeight="32.0" prefWidth="32.0" text="Delete" />
@@ -123,12 +123,12 @@
                                  <contextMenu>
                                     <ContextMenu>
                                       <items>
-                                          <MenuItem mnemonicParsing="false" text="Back" />
+                                          <MenuItem mnemonicParsing="false" text="Back" fx:id="contextBack"/>
                                           <SeparatorMenuItem mnemonicParsing="false" />
-                                        <MenuItem mnemonicParsing="false" text="Copy" />
-                                          <MenuItem mnemonicParsing="false" text="Cut" />
-                                          <MenuItem fx:id="contextmenuPaste" mnemonicParsing="false" onAction="#pasteItems" text="Paste" />
-                                          <MenuItem mnemonicParsing="false" text="Delete" />
+                                        <MenuItem mnemonicParsing="false" text="Copy" fx:id="contextCopy"/>
+                                          <MenuItem mnemonicParsing="false" text="Cut" fx:id="contextCut"/>
+                                          <MenuItem fx:id="contextPaste" mnemonicParsing="false" onAction="#pasteItems" text="Paste" />
+                                          <MenuItem mnemonicParsing="false" text="Delete" fx:id="contextDelete" />
                                       </items>
                                     </ContextMenu>
                                  </contextMenu>
