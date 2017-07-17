@@ -6,6 +6,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.Date;
 
 /**
  * Created by kostyazxcvbn on 09.07.2017.
@@ -20,8 +25,6 @@ public class Item{
     private String createdDate;
     private String attributes;
     private boolean isHidden;
-    private boolean isWritable;
-    private boolean isReadable;
     private boolean isDirectory;
     private boolean isAvailable;
     private boolean isRootStorage;
@@ -89,7 +92,10 @@ public class Item{
     }
 
     private void initAttributes(Path path){
-        
+        boolean isWritable=false;
+        boolean isReadable=false;
+        DateFormat formattedDate=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
         if(path.startsWith("/root")){
             this.name=path.getFileName().toString();
             this.isDirectory=true;
@@ -105,13 +111,13 @@ public class Item{
                 if(isDirectory && !isRootStorage){
                     this.type = "<DIR>";
 
-                    this.createdDate = attribs.creationTime().toString();
-                    this.lastModifiedDate = attribs.lastModifiedTime().toString();
+                    this.createdDate = (formattedDate.format(attribs.creationTime().toMillis()));
+                    this.lastModifiedDate = (formattedDate.format(attribs.lastModifiedTime().toMillis()));
                     this.size="";
                     this.name=path.getFileName().toString();
                     this.isHidden = path.toFile().isHidden();
-                    this.isReadable = Files.isReadable(path);
-                    this.isWritable = Files.isWritable(path);
+                    isReadable = Files.isReadable(path);
+                    isWritable = Files.isWritable(path);
                 }
                 if (isRootStorage) {
                     this.type = "<DRIVE>";
@@ -132,13 +138,13 @@ public class Item{
                         this.type = "?";
                     }
 
-                    this.createdDate = attribs.creationTime().toString();
-                    this.lastModifiedDate = attribs.lastModifiedTime().toString();
+                    this.createdDate = (formattedDate.format(attribs.creationTime().toMillis()));
+                    this.lastModifiedDate = (formattedDate.format(attribs.lastModifiedTime().toMillis()));
                     this.size=String.valueOf(attribs.size())+" B";
 
                     this.isHidden = path.toFile().isHidden();
-                    this.isReadable = Files.isReadable(path);
-                    this.isWritable = Files.isWritable(path);
+                    isReadable = Files.isReadable(path);
+                    isWritable = Files.isWritable(path);
                 }
 
             } catch (IOException e) {

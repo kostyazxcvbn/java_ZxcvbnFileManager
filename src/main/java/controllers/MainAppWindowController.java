@@ -559,7 +559,12 @@ public class MainAppWindowController implements IConflictListener {
                     FXOptimizedItem selectedItem=(FXOptimizedItem)tablevDirContent.getSelectionModel().getSelectedItem();
                     if (selectedItem != null) {
                         if (selectedItem.isDirectory()) {
-                            guiControlsStateHandler(GuiControlsState.FOLDER_SELECTED);
+                            if (!selectedItem.getItem().isRootStorage()) {
+                                guiControlsStateHandler(GuiControlsState.FOLDER_SELECTED);
+                            } else {
+                                guiControlsStateHandler(GuiControlsState.ROOT_LEVEL);
+                            }
+
                         } else {
                             guiControlsStateHandler(GuiControlsState.FILE_SELECTED);
                         }
@@ -584,8 +589,6 @@ public class MainAppWindowController implements IConflictListener {
                     guiControlsStateHandler(GuiControlsState.EMPTY_CONTENT);
                     return;
                 }
-
-
             }
         });
     }
@@ -747,6 +750,7 @@ public class MainAppWindowController implements IConflictListener {
 
         threadLogicUIPool.execute(appViewRefresher);
 
+        guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
     }
 
     public void cutItems(ActionEvent actionEvent) {
@@ -778,6 +782,8 @@ public class MainAppWindowController implements IConflictListener {
         appViewRefresher.addListener(itemContentContainerListener);
 
         threadLogicUIPool.execute(appViewRefresher);
+
+        guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
     }
 
     public void pasteItems(ActionEvent actionEvent) {
