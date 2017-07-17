@@ -248,7 +248,9 @@ public class FileManagerImpl implements IFileManager, IConlictable{
 
     @Override
     public Map<Item,ItemConflicts> pasteItemsFromBuffer(Item destination) {
-        return moveItemsTo(copiedItemsBuffer,destination,isCutOperation);
+        Map<Item,ItemConflicts> operationErrorsMap=moveItemsTo(copiedItemsBuffer,destination,isCutOperation);
+        copiedItemsBuffer.clear();
+        return operationErrorsMap;
     }
 
     @Override

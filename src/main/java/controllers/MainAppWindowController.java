@@ -3,9 +3,11 @@ package controllers;
 import interfaces.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -173,6 +175,47 @@ public class MainAppWindowController implements IConflictListener {
         }
     }
 
+    private class GuiControlsStateSwitcher extends Task<Void> {
+
+        private boolean stateCopy=false;
+        private boolean stateCut=false;
+        private boolean statePaste=false;
+        private boolean stateDelete=false;
+        private boolean stateBack=false;
+
+        public GuiControlsStateSwitcher(boolean stateCopy, boolean stateCut, boolean statePaste, boolean stateDelete, boolean stateBack) {
+            this.stateCopy = !stateCopy;
+            this.stateCut = !stateCut;
+            this.statePaste = !statePaste;
+            this.stateDelete = !stateDelete;
+            this.stateBack = !stateBack;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            Platform.runLater(()->toolbCopy.setDisable(stateCopy));
+            Platform.runLater(()->contextCopy.setDisable(stateCopy));
+            Platform.runLater(()->miCopy.setDisable(stateCopy));
+
+            Platform.runLater(()->toolbCut.setDisable(stateCut));
+            Platform.runLater(()->contextCut.setDisable(stateCut));
+            Platform.runLater(()->miCut.setDisable(stateCut));
+
+            Platform.runLater(()-> toolbPaste.setDisable(statePaste));
+            Platform.runLater(()->contextPaste.setDisable(statePaste));
+            Platform.runLater(()->miPaste.setDisable(statePaste));
+
+            Platform.runLater(()->toolbDelete.setDisable(stateDelete));
+            Platform.runLater(()->contextDelete.setDisable(stateDelete));
+            Platform.runLater(()->miDelete.setDisable(stateDelete));
+
+            Platform.runLater(()->toolbUp.setDisable(stateBack));
+            Platform.runLater(()->contextBack.setDisable(stateBack));
+
+            return null;
+        }
+    }
+
     private class SubdirectoriesLoader extends Task<Void> {
 
         CountDownLatch countDownLatch;
@@ -328,11 +371,12 @@ public class MainAppWindowController implements IConflictListener {
                         toolbUp.setGraphic(new ImageView(imageToolbUp));
                     }
                 });
-
                 return null;
             }
         };
         threadLogicUIPool.execute(buttonsImageLoader);
+        showHiddenItemsState = cmiShowHiddenItems.isSelected();
+        toolbShowHiddenItems.setSelected(showHiddenItemsState);
     }
 
     private void initImpls() {
@@ -471,6 +515,79 @@ public class MainAppWindowController implements IConflictListener {
 
     private void initItemContentView() {
         tablevDirContent.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        tablevDirContent.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+
+                if (event.getClickCount() == 2) {
+                    FXOptimizedItem selectedInList;
+                    HashSet<Item> selectedItems;
+
+                    try {
+
+                        selectedInList = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
+
+                        if (selectedInList.isDirectory()) {
+                            parentItem = selectedInList;
+
+                            try {
+                                selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
+                                selectedItemsList.clear();
+                                for (Item selectedItem : selectedItems) {
+                                    selectedItemsList.add(new FXOptimizedItem(selectedItem));
+                                }
+                            } catch (Exception e) {
+                                Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
+                                operationErrorsMap.put(parentItem.getValue(),ItemConflicts.SECURITY_ERROR);
+                                onConflictsHandler(operationErrorsMap);
+                                FileManagerItemsFactory.updateIcon(tablevDirContent,parentItem,FileManagerItemsFactory.getDirectoryUnavaible());
+                            }
+
+
+                            AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, tablevDirContent, 2000L);
+                            appViewRefresher.addListener(itemContentContainerListener);
+
+                            threadLogicUIPool.execute(appViewRefresher);
+
+                        }
+                    } catch (NullPointerException e) {
+                        return;
+                    }
+                    return;
+                }
+                if (event.getClickCount() == 1) {
+                    FXOptimizedItem selectedItem=(FXOptimizedItem)tablevDirContent.getSelectionModel().getSelectedItem();
+                    if (selectedItem != null) {
+                        if (selectedItem.isDirectory()) {
+                            guiControlsStateHandler(GuiControlsState.FOLDER_SELECTED);
+                        } else {
+                            guiControlsStateHandler(GuiControlsState.FILE_SELECTED);
+                        }
+                    }
+                }else{
+                    guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
+                }
+            }
+        });
+        selectedItemsList.addListener(new ListChangeListener<FXOptimizedItem>() {
+            @Override
+            public void onChanged(Change<? extends FXOptimizedItem> c) {
+                if (parentItem.getItem().isRoot()) {
+                    guiControlsStateHandler(GuiControlsState.ROOT_LEVEL);
+                    return;
+                }
+                if (!parentItem.getItem().isRoot()) {
+                    guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
+                    return;
+                }
+                if (selectedItemsList.isEmpty()) {
+                    guiControlsStateHandler(GuiControlsState.EMPTY_CONTENT);
+                    return;
+                }
+
+
+            }
+        });
     }
 
     private void showModalWindow(Stage modalWindowStage) {
@@ -488,19 +605,16 @@ public class MainAppWindowController implements IConflictListener {
     }
 
     private void guiControlsStateHandler(GuiControlsState guiControlsState) {
-        toolbCopy.setDisable(true);
-        toolbCut.setDisable(true);
-        toolbPaste.setDisable(true);
-        toolbDelete.setDisable(true);
-        Task<Void> guiControlsStateSwitcher = new Task<Void>() {
+
+               Task<Void> guiStateSwitcher = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
 
                 boolean stateCopy=false;
                 boolean stateCut=false;
-                boolean statePaste=false;
                 boolean stateDelete=false;
                 boolean stateBack=false;
+                boolean statePaste=false;
 
                 switch (guiControlsState) {
                     case ROOT_LEVEL:{
@@ -515,7 +629,7 @@ public class MainAppWindowController implements IConflictListener {
                     case EMPTY_CONTENT:{
                         stateCopy=false;
                         stateCut=false;
-                        statePaste=true;
+                        statePaste=(fileManager.getBuffer().isEmpty())?false:true;
                         stateDelete=false;
                         stateBack=true;
                         break;
@@ -531,7 +645,7 @@ public class MainAppWindowController implements IConflictListener {
                     case FOLDER_SELECTED:{
                         stateCopy=true;
                         stateCut=true;
-                        statePaste=true;
+                        statePaste=(fileManager.getBuffer().isEmpty())?false:true;
                         stateDelete=true;
                         stateBack=true;
                         break;
@@ -541,46 +655,13 @@ public class MainAppWindowController implements IConflictListener {
                     }
                 }
 
+                threadLogicUIPool.execute(new GuiControlsStateSwitcher(stateCopy,stateCut,statePaste,stateDelete,stateBack));
 
-
-
-
-
-                /*
-
-
-
-                Platform.runLater(() ->{
-
-                    toolbCopy.setDisable(!stateCopy);
-                    contextCopy.setDisable(!stateCopy);
-                    miCopy.setDisable(!stateCopy);
-
-                    toolbCut.setDisable(!stateCut);
-                    contextCut.setDisable(!stateCut);
-                    miCut.setDisable(!stateCut);
-
-                    toolbPaste.setDisable(!statePaste);
-                    contextPaste.setDisable(!statePaste);
-                    miPaste.setDisable(!statePaste);
-
-                    toolbDelete.setDisable(!stateDelete);
-                    contextDelete.setDisable(!stateDelete);
-                    miDelete.setDisable(!stateDelete);
-
-                    toolbUp.setDisable(!stateBack);
-                    contextBack.setDisable(!stateBack)
-
-                });
-
-                */
                 return null;
             }
         };
 
-        threadLogicUIPool.execute(guiControlsStateSwitcher);
-
-
+        threadLogicUIPool.execute(guiStateSwitcher);
     }
 
     private void onConflictsHandler(Map<Item, ItemConflicts> operationErrorsMap) {
@@ -729,13 +810,13 @@ public class MainAppWindowController implements IConflictListener {
     }
 
     public void showHiddenItems(ActionEvent actionEvent) {
+
         showHiddenItemsState = cmiShowHiddenItems.isSelected();
+        toolbShowHiddenItems.setSelected(showHiddenItemsState);
 
         AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, treevItemsTree, 0);
         appViewRefresher.addListener(itemsTreeRefreshListener);
         appViewRefresher.addListener(itemContentContainerListener);
-
-
         threadLogicUIPool.execute(appViewRefresher);
     }
 
@@ -743,44 +824,6 @@ public class MainAppWindowController implements IConflictListener {
         okCancelModalController.initWarningModal("It's my test application!",actionOnAboutInfo,null);
         okCancelModalController.getButtonCancel().setVisible(false);
         showModalWindow(okCancelModalStage);
-    }
-
-    public void onItemsListClick(MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() == 2) {
-            FXOptimizedItem selectedInList;
-            HashSet<Item> selectedItems;
-
-            try {
-
-                selectedInList = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
-
-                if (selectedInList.isDirectory()) {
-                    parentItem = selectedInList;
-
-                    try {
-                        selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
-                        selectedItemsList.clear();
-                        for (Item selectedItem : selectedItems) {
-                            selectedItemsList.add(new FXOptimizedItem(selectedItem));
-                        }
-                    } catch (Exception e) {
-                        Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
-                        operationErrorsMap.put(parentItem.getValue(),ItemConflicts.SECURITY_ERROR);
-                        onConflictsHandler(operationErrorsMap);
-                        FileManagerItemsFactory.updateIcon(tablevDirContent,parentItem,FileManagerItemsFactory.getDirectoryUnavaible());
-                    }
-
-
-                    AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, tablevDirContent, 2000L);
-                    appViewRefresher.addListener(itemContentContainerListener);
-
-                    threadLogicUIPool.execute(appViewRefresher);
-
-                }
-            } catch (NullPointerException e) {
-                return;
-            }
-        }
     }
 
     public void getLevelUp(ActionEvent actionEvent) {
@@ -809,6 +852,16 @@ public class MainAppWindowController implements IConflictListener {
         appViewRefresher.addListener(itemContentContainerListener);
         ;
 
+        threadLogicUIPool.execute(appViewRefresher);
+    }
+
+    public void onButtonPressedshowHiddenItems(ActionEvent actionEvent) {
+        showHiddenItemsState = toolbShowHiddenItems.isSelected();
+        cmiShowHiddenItems.setSelected(showHiddenItemsState);
+
+        AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, treevItemsTree, 0);
+        appViewRefresher.addListener(itemsTreeRefreshListener);
+        appViewRefresher.addListener(itemContentContainerListener);
         threadLogicUIPool.execute(appViewRefresher);
     }
 

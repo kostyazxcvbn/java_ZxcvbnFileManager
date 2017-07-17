@@ -35,7 +35,7 @@
                 <Menu mnemonicParsing="false" text="Edit">
                   <items>
                     <MenuItem fx:id="miCopy" mnemonicParsing="false" onAction="#copyItems" text="Copy" />
-                        <MenuItem fx:id="niCut" mnemonicParsing="false" onAction="#cutItems" text="Cut" />
+                        <MenuItem fx:id="miCut" mnemonicParsing="false" onAction="#cutItems" text="Cut" />
                         <MenuItem fx:id="miPaste" mnemonicParsing="false" onAction="#pasteItems" text="Paste" />
                         <MenuItem fx:id="miDelete" mnemonicParsing="false" onAction="#deleteItems" text="Delete" />
                   </items>
@@ -59,7 +59,7 @@
                   <Button fx:id="toolbPaste" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#pasteItems" prefHeight="32.0" prefWidth="32.0" text="Edit" />
                   <Button fx:id="toolbDelete" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#deleteItems" prefHeight="32.0" prefWidth="32.0" text="Delete" />
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
-                  <ToggleButton fx:id="toolbShowHiddenItems" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#showHiddenItems" prefHeight="32.0" prefWidth="32.0" text="Show hidden items" />
+                  <ToggleButton fx:id="toolbShowHiddenItems" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onButtonPressedshowHiddenItems" prefHeight="32.0" prefWidth="32.0" text="Show hidden items" />
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
                   <Button fx:id="toolbUp" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#getLevelUp" prefHeight="32.0" prefWidth="32.0" text="Up" />
               </items>
@@ -79,7 +79,7 @@
                         </AnchorPane>
                       <AnchorPane>
                            <children>
-                              <TableView fx:id="tablevDirContent" onMouseClicked="#onItemsListClick" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <TableView fx:id="tablevDirContent" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                 <columns>
                                     <TableColumn fx:id="columnItemImage" prefWidth="40.0" resizable="false">
                                         <cellValueFactory>

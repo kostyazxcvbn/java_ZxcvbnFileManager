@@ -16,7 +16,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>8.6.0</version>
                 <configuration>
-                    <mainClass>vcontroller.MainController</mainClass>
+                    <mainClass>controllers.MainController</mainClass>
                 </configuration>
             </plugin>
         </plugins>
