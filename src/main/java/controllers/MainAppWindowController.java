@@ -327,8 +327,10 @@ public class MainAppWindowController implements IConflictListener {
 
         initItemNameConflictModal();
         initOkCancelModal();
+
         initOperationsConflictModal();
-        initNewFolderNametModal();
+
+        initNewFolderNameModal();
 
         initItemsTree();
         initItemContentView();
@@ -530,7 +532,7 @@ public class MainAppWindowController implements IConflictListener {
         }
     }
 
-    private void initNewFolderNametModal() {
+    private void initNewFolderNameModal() {
         if (newFolderNameModalLoader == null) {
             newFolderNameModalLoader = new FXMLLoader(getClass().getResource("/fxml/NewFolderNameModal.fxml"));
             newFolderNameModalStage = new Stage();

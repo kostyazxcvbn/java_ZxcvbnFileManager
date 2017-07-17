@@ -24,7 +24,7 @@ public class NewFolderNameModalController {
     private IOkCancelHandler warningAction;
 
     public void initialize() {
-        Pattern pattern = Pattern.compile("[a-zA-Zа-яА-Я, 0-9]+|$");
+        Pattern pattern = Pattern.compile("[a-zA-Zа-яА-ЯЁё 0-9]+|$");
         textfNewFoldername.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
