@@ -20,6 +20,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import model.FileManagerImpl;
 import model.Item;
 
@@ -485,6 +486,12 @@ public class MainAppWindowController implements IConflictListener {
             itemNameConflictModalStage.initOwner(MainController.getPrimaryStage());
             itemNameConflictModalController = itemNameConflictModalLoader.getController();
             itemNameConflictModalController.setWaitingResultLock(lock);
+            scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {
+                @Override
+                public void handle(WindowEvent event) {
+                    event.consume();
+                }
+            });
         }
     }
 
