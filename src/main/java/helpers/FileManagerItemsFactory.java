@@ -1,6 +1,7 @@
 package helpers;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -33,6 +34,8 @@ public final class FileManagerItemsFactory {
     private static FileManagerImpl fileManager = FileManagerImpl.getInstance();
 
     public static class FXOptimizedItem extends TreeItem<Item>{
+
+
 
         private ImageView itemIcon;
 
@@ -82,6 +85,10 @@ public final class FileManagerItemsFactory {
 
         public ImageView getIcon() {
             return itemIcon;
+        }
+
+        public SimpleObjectProperty<ImageView>iconProperty() {
+            return new SimpleObjectProperty<ImageView>(getIcon());
         }
 
         public FXOptimizedItem getParentItem() {
@@ -196,21 +203,9 @@ public final class FileManagerItemsFactory {
     public static ImageView getDirectoryUnavaible() {
         return new ImageView(directoryUnavaible);
     }
-    public static void updateIcon(Object itemsContainer, FXOptimizedItem item, ImageView icon) {
-        if (itemsContainer instanceof TreeView) {
-            Platform.runLater(()->item.setGraphic(icon));
-        }
-        if (itemsContainer instanceof TableView) {
+    public static void updateIcon(FXOptimizedItem item, ImageView icon) {
             item.setIcon(icon);
-            Platform.runLater(() ->{
-                item.setGraphic(icon);
-                ((TableView)itemsContainer).refresh();
-            });
-        }
-        if (itemsContainer == null) {
-            return;
-        }
-
+            Platform.runLater(()->item.setGraphic(icon));
     }
 
     public static FXOptimizedItem getNewfxOptimizedItem(Item item){

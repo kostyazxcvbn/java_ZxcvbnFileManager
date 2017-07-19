@@ -6,6 +6,7 @@ import javafx.scene.image.ImageView;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import helpers.FileManagerItemsFactory.*;
 
 /**
  * Created by kostyazxcvbn on 13.07.2017.
@@ -13,15 +14,18 @@ import java.util.concurrent.CountDownLatch;
 public class AppViewRefresher extends Task<Void> implements IRefreshable {
     ArrayList<IRefreshingListener> refreshers;
     CountDownLatch countDownLatch;
-    FileManagerItemsFactory.FXOptimizedItem item;
-    Object itemContainer;
+    FXOptimizedItem item;
+    boolean isIconWillChanged;
     long delayImitationMs;
 
-    public AppViewRefresher(FileManagerItemsFactory.FXOptimizedItem item, Object itemContainer, long delayImitaionMs) {
+    public AppViewRefresher(FXOptimizedItem item, boolean isIconWillChanged, long delayImitaionMs,IRefreshingListener...refreshers) {
         this.refreshers = new ArrayList<>();
         this.item = item;
-        this.itemContainer=itemContainer;
+        this.isIconWillChanged =isIconWillChanged;
         this.delayImitationMs=delayImitaionMs;
+        for (IRefreshingListener refresher : refreshers) {
+            this.refreshers.add(refresher);
+        }
     }
 
     @Override
@@ -32,20 +36,19 @@ public class AppViewRefresher extends Task<Void> implements IRefreshable {
 
         this.countDownLatch = new CountDownLatch(refreshers.size());
 
-        FileManagerItemsFactory.updateIcon(itemContainer, item, FileManagerItemsFactory.getItemWaiting());
+        if (isIconWillChanged) {
+            FileManagerItemsFactory.updateIcon(item, FileManagerItemsFactory.getItemWaiting());
+        }
 
         Thread.sleep(delayImitationMs);
         notifyListeners();
         countDownLatch.await();
 
-        FileManagerItemsFactory.updateIcon(itemContainer, item, tempIcon);
+        if (isIconWillChanged) {
+            FileManagerItemsFactory.updateIcon(item, tempIcon);
+        }
 
         return null;
-    }
-
-    @Override
-    public void addListener(IRefreshingListener listener) {
-        refreshers.add(listener);
     }
 
     @Override
