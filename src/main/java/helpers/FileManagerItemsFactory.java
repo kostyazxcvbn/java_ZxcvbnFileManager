@@ -241,8 +241,9 @@ public final class FileManagerItemsFactory {
         return new ImageView(directoryUnavaible);
     }
     public static void updateIcon(FXOptimizedItem item, ImageView icon) {
-            item.setIcon(icon);
-            Platform.runLater(()->item.setGraphic(icon));
+        ImageView treeIcon=new ImageView(icon.getImage());
+        item.setIcon(icon);
+        Platform.runLater(()->item.setGraphic(treeIcon));
     }
 
     public static FXOptimizedItem getNewfxOptimizedItem(Item item){
