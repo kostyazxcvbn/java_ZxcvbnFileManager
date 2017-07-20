@@ -73,7 +73,7 @@ public class MainAppWindowController implements IConflictListener {
     @FXML
     private TreeView treevItemsTree;
     @FXML
-    private TableView tablevDirContent;
+    private TableView innerItemsList;
     @FXML
     private Button toolbCopy;
     @FXML
@@ -103,7 +103,7 @@ public class MainAppWindowController implements IConflictListener {
 
     private IFileManager fileManager;
     private FXOptimizedItem parentItem;
-    private ObservableList<FXOptimizedItem> itemsInTable;
+    private ObservableList<FXOptimizedItem> innerItems;
     private ExecutorService threadLogicUIPool;
     private boolean showHiddenItemsState;
 
@@ -203,7 +203,7 @@ public class MainAppWindowController implements IConflictListener {
 
         @Override
         protected Void call() throws Exception {
-            ObservableList<FXOptimizedItem> innerItemsInView = tablevDirContent.getItems();
+            ObservableList<FXOptimizedItem> innerItemsInView = MainAppWindowController.this.innerItemsList.getItems();
             innerItemsInView.clear();
 
             if (!innerItemsList.isEmpty()) {
@@ -317,9 +317,9 @@ public class MainAppWindowController implements IConflictListener {
         ((IConlictable) fileManager).addListener(this);
 
         threadLogicUIPool = MainController.getThreadLogicUIPool();
-        itemsInTable = FXCollections.observableArrayList();
-
         itemsOperationsPool= Executors.newCachedThreadPool();
+
+        innerItems = FXCollections.observableArrayList();
 
         lock = new Object();
 
@@ -339,8 +339,8 @@ public class MainAppWindowController implements IConflictListener {
             getOkCancelCloseModal();
         });
 
-        refreshItems(parentItem, true, 2000, itemsTreeRefreshListener, itemContentContainerListener);
         guiControlsStateHandler(GuiControlsState.ROOT_LEVEL);
+        refreshItems(parentItem, true, 2000, itemsTreeRefreshListener, itemContentContainerListener);
     }
 
     private void initButtons() {
@@ -390,7 +390,6 @@ public class MainAppWindowController implements IConflictListener {
             @Override
             public void onButtonOkPressed(HashSet<Item> itemsCollection, String path) {
                 onCloseAppHandler();
-
             }
 
             @Override
@@ -414,14 +413,14 @@ public class MainAppWindowController implements IConflictListener {
         itemsTreeRefreshListener = new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
-                threadLogicUIPool.execute(new SubfoldersLoader(parentItem, itemsInTable, countDownLatch));
+                threadLogicUIPool.execute(new SubfoldersLoader(parentItem, innerItems, countDownLatch));
             }
         };
 
         itemContentContainerListener = new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
-                threadLogicUIPool.execute(new ItemContentLoader(parentItem, itemsInTable, countDownLatch));
+                threadLogicUIPool.execute(new ItemContentLoader(parentItem, innerItems, countDownLatch));
             }
         };
 
@@ -560,24 +559,15 @@ public class MainAppWindowController implements IConflictListener {
     }
 
     private void initItemsTree() {
-        HashSet<Item> selectedItems = null;
+
         parentItem = FileManagerItemsFactory.getRoot();
         treevItemsTree.setRoot(parentItem);
         treevItemsTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
-        if (selectedItems.isEmpty()){
-            Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
-            operationErrorsMap.put(parentItem.getValue(),ItemConflicts.SECURITY_ERROR);
-            onConflictsHandler(operationErrorsMap);
-        }
-        for (Item selectedItem : selectedItems) {
-            itemsInTable.add(new FXOptimizedItem(selectedItem));
-        }
     }
 
     private void initItemContentView() {
-        tablevDirContent.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        itemsInTable.addListener(new ListChangeListener<FXOptimizedItem>() {
+        innerItemsList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        innerItems.addListener(new ListChangeListener<FXOptimizedItem>() {
             @Override
             public void onChanged(Change<? extends FXOptimizedItem> c) {
                 if (parentItem.getItem().isRoot()) {
@@ -588,7 +578,7 @@ public class MainAppWindowController implements IConflictListener {
                     guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
                     return;
                 }
-                if (itemsInTable.isEmpty()) {
+                if (innerItems.isEmpty()) {
                     guiControlsStateHandler(GuiControlsState.EMPTY_CONTENT);
                     return;
                 }
@@ -646,7 +636,7 @@ public class MainAppWindowController implements IConflictListener {
                     case FILE_SELECTED:{
                         stateCopy=true;
                         stateCut=true;
-                        statePaste=(tablevDirContent.getSelectionModel().getSelectedItems().size()==1)?false:true;
+                        statePaste=(innerItemsList.getSelectionModel().getSelectedItems().size()==1)?false:true;
                         stateDelete=true;
                         stateBack=true;
                         stateCreate=false;
@@ -690,28 +680,22 @@ public class MainAppWindowController implements IConflictListener {
     //gui reactions
     public void onClickItemsTree(MouseEvent mouseEvent) {
 
-        Object itemsContainer = treevItemsTree;
-
         FXOptimizedItem tempSelectedLink = parentItem;
         FXOptimizedItem tempSelected = tempSelectedLink;
+        boolean isIconWillChanged=false;
 
-        try {
-            parentItem = (FXOptimizedItem) treevItemsTree.getSelectionModel().getSelectedItem();
-
-        } catch (NullPointerException e) {
-            return;
-        }
+        parentItem = (FXOptimizedItem) treevItemsTree.getSelectionModel().getSelectedItem();
 
         if (parentItem == null) {
             parentItem = tempSelected;
-            itemsContainer = null;
         }
 
-        if (!parentItem.isLeaf()) {
-            itemsContainer = null;
+        if (parentItem.isExpanded()) {
+            System.out.println(parentItem.isExpanded());
+            isIconWillChanged=true;
         }
 
-        refreshItems(parentItem, true, 2000, itemsTreeRefreshListener,itemContentContainerListener);
+        refreshItems(parentItem, isIconWillChanged, 2000, itemsTreeRefreshListener,itemContentContainerListener);
     }
 
     public void onClickItemsTable(MouseEvent event) {
@@ -719,7 +703,7 @@ public class MainAppWindowController implements IConflictListener {
             FXOptimizedItem selectedInList;
             try {
 
-                selectedInList = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
+                selectedInList = (FXOptimizedItem) innerItemsList.getSelectionModel().getSelectedItem();
 
                 if (selectedInList.isDirectory()) {
                     parentItem = selectedInList;
@@ -732,7 +716,7 @@ public class MainAppWindowController implements IConflictListener {
             return;
         }
         if (event.getClickCount() == 1) {
-            FXOptimizedItem selectedItem=(FXOptimizedItem)tablevDirContent.getSelectionModel().getSelectedItem();
+            FXOptimizedItem selectedItem=(FXOptimizedItem) innerItemsList.getSelectionModel().getSelectedItem();
             if (selectedItem != null) {
                 if (selectedItem.isDirectory()) {
                     if (!selectedItem.getItem().isRootStorage()) {
@@ -756,7 +740,7 @@ public class MainAppWindowController implements IConflictListener {
 
     public void onClickCopy(ActionEvent actionEvent) {
 
-        ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
+        ObservableList<FXOptimizedItem> selectedItems = innerItemsList.getSelectionModel().getSelectedItems();
         HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
 
         for (FXOptimizedItem selectedItem : selectedItems) {
@@ -774,7 +758,7 @@ public class MainAppWindowController implements IConflictListener {
 
     public void onClickCut(ActionEvent actionEvent) {
 
-        ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
+        ObservableList<FXOptimizedItem> selectedItems = innerItemsList.getSelectionModel().getSelectedItems();
         HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
 
         for (FXOptimizedItem selectedItem : selectedItems) {
@@ -803,8 +787,8 @@ public class MainAppWindowController implements IConflictListener {
 
         FXOptimizedItem destinationFolder = parentItem;
 
-        if (tablevDirContent.getSelectionModel().getSelectedItem() != null && tablevDirContent.getSelectionModel().getSelectedItems().size()==1) {
-            destinationFolder = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
+        if (innerItemsList.getSelectionModel().getSelectedItem() != null && innerItemsList.getSelectionModel().getSelectedItems().size()==1) {
+            destinationFolder = (FXOptimizedItem) innerItemsList.getSelectionModel().getSelectedItem();
         }
 
         ItemPaster itemPaster = new ItemPaster(destinationFolder);
@@ -813,7 +797,7 @@ public class MainAppWindowController implements IConflictListener {
 
     public void onClickDelete(ActionEvent actionEvent) {
 
-        ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
+        ObservableList<FXOptimizedItem> selectedItems = innerItemsList.getSelectionModel().getSelectedItems();
         HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
 
         for (FXOptimizedItem selectedItem : selectedItems) {
@@ -863,8 +847,8 @@ public class MainAppWindowController implements IConflictListener {
         FXOptimizedItem destinationFolder = parentItem;
 
         if (actionEvent.getSource() instanceof MenuItem && ((MenuItem) actionEvent.getSource()).getId().equals("contextNewFolder")) {
-            if (tablevDirContent.getSelectionModel().getSelectedItem() != null) {
-                destinationFolder = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
+            if (innerItemsList.getSelectionModel().getSelectedItem() != null) {
+                destinationFolder = (FXOptimizedItem) innerItemsList.getSelectionModel().getSelectedItem();
             }
         }
 
@@ -879,31 +863,23 @@ public class MainAppWindowController implements IConflictListener {
     }
 
     private void refreshItems(FXOptimizedItem parentItem, boolean isIconWillChanged, long delayImitationMs, IRefreshingListener...refreshers) {
-        itemsOperationsPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                HashSet<Item> innerItems;
-                try {
-                    innerItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
-                    itemsInTable.clear();
-                    for (Item innerItem : innerItems) {
-                        itemsInTable.add(new FXOptimizedItem(innerItem));
-                    }
-                } catch (Exception e) {
-                    Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
-                    operationErrorsMap.put(parentItem.getValue(), ItemConflicts.SECURITY_ERROR);
-                    onConflictsHandler(operationErrorsMap);
-                    itemsInTable.clear();
-                }
 
-                AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, isIconWillChanged, delayImitationMs,refreshers);
-                itemsOperationsPool.execute(appViewRefresher);
+        HashSet<Item> innerItems;
+        try {
+            innerItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
+            this.innerItems.clear();
+            for (Item innerItem : innerItems) {
+                this.innerItems.add(new FXOptimizedItem(innerItem));
             }
-        });
+        } catch (Exception e) {
+            Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
+            operationErrorsMap.put(parentItem.getValue(), ItemConflicts.SECURITY_ERROR);
+            onConflictsHandler(operationErrorsMap);
+            this.innerItems.clear();
+        }
 
-
-
-
-
+        AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, isIconWillChanged, delayImitationMs,refreshers);
+        itemsOperationsPool.execute(appViewRefresher);
     }
+
 }

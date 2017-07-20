@@ -82,7 +82,7 @@
                         </AnchorPane>
                       <AnchorPane>
                            <children>
-                              <TableView fx:id="tablevDirContent" onMouseClicked="#onClickItemsTable" style="-fx-control-inner-background-alt: -fx-control-inner-background; -fx-table-cell-border-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <TableView fx:id="innerItemsList" onMouseClicked="#onClickItemsTable" style="-fx-control-inner-background-alt: -fx-control-inner-background; -fx-table-cell-border-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                 <columns>
                                     <TableColumn fx:id="columnItemImage" prefWidth="40.0" resizable="false">
                                         <cellValueFactory>
