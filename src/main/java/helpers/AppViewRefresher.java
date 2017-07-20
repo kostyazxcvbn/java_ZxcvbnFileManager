@@ -31,9 +31,6 @@ public class AppViewRefresher extends Task<Void> implements IRefreshable {
     @Override
     protected Void call() throws Exception {
 
-        ImageView tempLink=item.getIcon();
-        ImageView tempIcon=tempLink;
-
         this.countDownLatch = new CountDownLatch(refreshers.size());
 
         if (isIconWillChanged) {
@@ -45,7 +42,7 @@ public class AppViewRefresher extends Task<Void> implements IRefreshable {
         countDownLatch.await();
 
         if (isIconWillChanged) {
-            FileManagerItemsFactory.updateIcon(item, tempIcon);
+            FileManagerItemsFactory.updateIcon(item, FileManagerItemsFactory.getItemImageView(item.getValue()));
         }
 
         return null;

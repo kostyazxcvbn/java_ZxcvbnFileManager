@@ -64,7 +64,7 @@
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
                   <ToggleButton fx:id="toolbShowHiddenItems" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickButtonShowHide" prefHeight="32.0" prefWidth="32.0" text="Show hidden items" />
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
-                  <Button fx:id="toolbUp" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickBAck" prefHeight="32.0" prefWidth="32.0" text="Up" />
+                  <Button fx:id="toolbUp" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickBack" prefHeight="32.0" prefWidth="32.0" text="Up" />
               </items>
             </ToolBar>
          </children>
@@ -128,7 +128,7 @@
                                       <items>
                                           <MenuItem fx:id="contextNewFolder" mnemonicParsing="false" onAction="#onClickCreateFolder" text="New Folder..." />
                                           <SeparatorMenuItem mnemonicParsing="false" />
-                                          <MenuItem fx:id="contextBack" mnemonicParsing="false" onAction="#onClickBAck" text="Back" />
+                                          <MenuItem fx:id="contextBack" mnemonicParsing="false" onAction="#onClickBack" text="Back" />
                                           <SeparatorMenuItem mnemonicParsing="false" />
                                         <MenuItem fx:id="contextCopy" mnemonicParsing="false" onAction="#onClickCopy" text="Copy" />
                                           <MenuItem fx:id="contextCut" mnemonicParsing="false" onAction="#onClickCut" text="Cut" />

@@ -138,27 +138,6 @@ public class MainAppWindowController implements IConflictListener {
 
     private ExecutorService itemsOperationsPool;
 
-    @Override
-    public NameConflictState onConflict() {
-
-        Platform.runLater(() -> showModalWindow(itemNameConflictModalStage));
-        NameConflictState nameConflictState = null;
-
-        itemNameConflictModalController.setWaitingResultLock(lock);
-
-        synchronized (lock) {
-            try {
-                lock.wait();
-            } catch (InterruptedException e) {
-                return null;
-            }
-        }
-
-        return nameConflictState;
-    }
-
-
-
     //inner runnable subtasks
     private class SubfoldersLoader extends Task<Void> {
 
@@ -413,14 +392,14 @@ public class MainAppWindowController implements IConflictListener {
         itemsTreeRefreshListener = new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
-                threadLogicUIPool.execute(new SubfoldersLoader(parentItem, innerItems, countDownLatch));
+                itemsOperationsPool.execute(new SubfoldersLoader(parentItem, innerItems, countDownLatch));
             }
         };
 
         itemContentContainerListener = new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
-                threadLogicUIPool.execute(new ItemContentLoader(parentItem, innerItems, countDownLatch));
+                itemsOperationsPool.execute(new ItemContentLoader(parentItem, innerItems, countDownLatch));
             }
         };
 
@@ -586,11 +565,6 @@ public class MainAppWindowController implements IConflictListener {
         });
     }
 
-    private void showModalWindow(Stage modalWindowStage) {
-        MainController.setCurrentStage(modalWindowStage);
-        modalWindowStage.show();
-    }
-
     //handlers
     private void onCloseAppHandler() {
 
@@ -678,24 +652,24 @@ public class MainAppWindowController implements IConflictListener {
     }
 
     //gui reactions
-    public void onClickItemsTree(MouseEvent mouseEvent) {
+    public void onClickItemsTree(MouseEvent event) {
 
         FXOptimizedItem tempSelectedLink = parentItem;
         FXOptimizedItem tempSelected = tempSelectedLink;
         boolean isIconWillChanged=false;
 
         parentItem = (FXOptimizedItem) treevItemsTree.getSelectionModel().getSelectedItem();
+        if (event.getClickCount() == 1) {
 
-        if (parentItem == null) {
-            parentItem = tempSelected;
+            if (parentItem == null) {
+                parentItem = tempSelected;
+            }
+
+            if (parentItem.isLeaf() || parentItem.isExpanded()) {
+                isIconWillChanged = true;
+                refreshItems(parentItem, isIconWillChanged, 2000, itemsTreeRefreshListener, itemContentContainerListener);
+            }
         }
-
-        if (parentItem.isExpanded()) {
-            System.out.println(parentItem.isExpanded());
-            isIconWillChanged=true;
-        }
-
-        refreshItems(parentItem, isIconWillChanged, 2000, itemsTreeRefreshListener,itemContentContainerListener);
     }
 
     public void onClickItemsTable(MouseEvent event) {
@@ -792,7 +766,7 @@ public class MainAppWindowController implements IConflictListener {
         }
 
         ItemPaster itemPaster = new ItemPaster(destinationFolder);
-        threadLogicUIPool.execute(itemPaster);
+        itemsOperationsPool.execute(itemPaster);
     }
 
     public void onClickDelete(ActionEvent actionEvent) {
@@ -825,7 +799,7 @@ public class MainAppWindowController implements IConflictListener {
         showModalWindow(okCancelModalStage);
     }
 
-    public void onClickBAck(ActionEvent actionEvent) {
+    public void onClickBack(ActionEvent actionEvent) {
 
         if (parentItem.equals(FileManagerItemsFactory.getRoot())) {
             return;
@@ -871,15 +845,39 @@ public class MainAppWindowController implements IConflictListener {
             for (Item innerItem : innerItems) {
                 this.innerItems.add(new FXOptimizedItem(innerItem));
             }
+            AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, isIconWillChanged, delayImitationMs,refreshers);
+            itemsOperationsPool.execute(appViewRefresher);
+
         } catch (Exception e) {
             Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
             operationErrorsMap.put(parentItem.getValue(), ItemConflicts.SECURITY_ERROR);
             onConflictsHandler(operationErrorsMap);
+            parentItem.setIcon(FileManagerItemsFactory.getDirectoryUnavaible());
             this.innerItems.clear();
         }
-
-        AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, isIconWillChanged, delayImitationMs,refreshers);
-        itemsOperationsPool.execute(appViewRefresher);
     }
 
+    private void showModalWindow(Stage modalWindowStage) {
+        MainController.setCurrentStage(modalWindowStage);
+        modalWindowStage.show();
+    }
+
+    @Override
+    public NameConflictState onConflict() {
+
+        Platform.runLater(() -> showModalWindow(itemNameConflictModalStage));
+        NameConflictState nameConflictState = null;
+
+        itemNameConflictModalController.setWaitingResultLock(lock);
+
+        synchronized (lock) {
+            try {
+                lock.wait();
+            } catch (InterruptedException e) {
+                return null;
+            }
+        }
+
+        return nameConflictState;
+    }
 }
