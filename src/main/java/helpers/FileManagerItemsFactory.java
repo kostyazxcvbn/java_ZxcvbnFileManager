@@ -121,7 +121,7 @@ public final class FileManagerItemsFactory {
 
         public void setIcon(ImageView itemIcon) {
             icon.set(itemIcon);
-            Platform.runLater(()->this.setGraphic(itemIcon));
+            Platform.runLater(()->this.setGraphic(new ImageView(itemIcon.getImage())));
         }
 
         public boolean isHidden() {
@@ -241,9 +241,7 @@ public final class FileManagerItemsFactory {
         return new ImageView(directoryUnavaible);
     }
     public static void updateIcon(FXOptimizedItem item, ImageView icon) {
-        ImageView treeIcon=new ImageView(icon.getImage());
         item.setIcon(icon);
-        Platform.runLater(()->item.setGraphic(treeIcon));
     }
 
     public static FXOptimizedItem getNewfxOptimizedItem(Item item){
