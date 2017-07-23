@@ -60,7 +60,6 @@ public class ItemNameConflictModalController {
     }
 
     public void onOKPressed(ActionEvent actionEvent) {
-
         if (radiobReplaceExisting.isSelected()) {
             nameConflictState=(checkbForAllItems.isSelected())?NameConflictState.REPLACE_EXISTING_ALL:NameConflictState.REPLACE_EXISTING;
         }

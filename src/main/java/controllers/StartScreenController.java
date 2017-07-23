@@ -52,7 +52,7 @@ public class StartScreenController implements Initializable{
                     try {
                         Thread.sleep(random.nextInt(200) + 100);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        break;
                     }
                 } while (progressLevel < 1);
                 progbStartScreenLoading.setProgress(1);

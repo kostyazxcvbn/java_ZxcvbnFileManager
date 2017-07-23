@@ -144,13 +144,12 @@ public class FileManagerImpl implements IFileManager{
 
         Map<Item, ItemConflicts>notMovedItems = new HashMap<>(1);
 
-        if (isCutOperation && source.equals(destination)) {
-            notMovedItems.put(source, ItemConflicts.ACCESS_ERROR);
+        if (source.equals(destination)) {
+            notMovedItems.put(source, ItemConflicts.DESTINATION_ERROR);
             return notMovedItems;
         }
 
         Path newItem = destination.getPath().resolve(source.getPath().getFileName());
-
 
         if (nameConflictState==NameConflictState.NO_CONFLICTS && Files.exists(newItem)){
             nameConflictState=NameConflictState.UNKNOWN;

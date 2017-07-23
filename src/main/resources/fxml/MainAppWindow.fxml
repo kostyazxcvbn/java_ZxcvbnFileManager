@@ -126,9 +126,9 @@
                                  <contextMenu>
                                     <ContextMenu>
                                       <items>
-                                          <MenuItem fx:id="contextNewFolder" mnemonicParsing="false" onAction="#onClickCreateFolder" text="%menuTextCreate" />
-                                          <SeparatorMenuItem mnemonicParsing="false" />
                                           <MenuItem fx:id="contextBack" mnemonicParsing="false" onAction="#onClickBack" text="%menuTextBack" />
+                                          <SeparatorMenuItem mnemonicParsing="false" />
+                                          <MenuItem fx:id="contextNewFolder" mnemonicParsing="false" onAction="#onClickCreateFolder" text="%menuTextCreate" />
                                           <SeparatorMenuItem mnemonicParsing="false" />
                                         <MenuItem fx:id="contextCopy" mnemonicParsing="false" onAction="#onClickCopy" text="%menuTextCopy" />
                                           <MenuItem fx:id="contextCut" mnemonicParsing="false" onAction="#onClickCut" text="%menuTextCut" />

@@ -6,9 +6,6 @@
     <value id="fxmlOkCancelModal">/fxml/OkCancelContainerModal.fxml</value>
     <value id="fxmlOperationsConflictModal">/fxml/OperationsConflictModal.fxml</value>
     <value id="fxmlNewFolderNameModal">/fxml/NewFolderNameModal.fxml</value>
-
-    <value id="titleMainAppWindow">The ZxcvbnFileNManager</value>
-
     <value id="imagePathCreate">/img/iconNewFolder.png</value>
     <value id="imagePathCopy">/img/iconCopy.png</value>
     <value id="imagePathCut">/img/iconCut.png</value>
@@ -16,5 +13,4 @@
     <value id="imagePathDelete">/img/iconRemove.png</value>
     <value id="imagePathShowHide">/img/iconHide.png</value>
     <value id="imagePathBack">/img/iconLevelUp.png</value>
-
 </values>

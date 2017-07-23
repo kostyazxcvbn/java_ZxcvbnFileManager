@@ -675,6 +675,7 @@ public class MainAppWindowController implements Initializable {
 
             if (parentItem.isLeaf() || parentItem.isExpanded()) {
                 isIconWillChanged = true;
+                parentItem.getChildren().clear();
                 delayImitation=2000;
             }
             refreshItems(parentItem, isIconWillChanged, delayImitation, itemsTreeRefreshListener, itemContentContainerListener);
@@ -844,24 +845,25 @@ public class MainAppWindowController implements Initializable {
     }
 
     private void refreshItems(FXOptimizedItem parentItem, boolean isIconWillChanged, long delayImitationMs, IRefreshingListener...refreshers) {
+        threadLogicUIPool.execute(()->{
+            HashSet<Item> innerItems;
+            try {
+                innerItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
+                this.innerItems.clear();
+                for (Item innerItem : innerItems) {
+                    this.innerItems.add(new FXOptimizedItem(innerItem));
+                }
+                AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, isIconWillChanged, delayImitationMs,refreshers);
+                itemsOperationsPool.execute(appViewRefresher);
 
-        HashSet<Item> innerItems;
-        try {
-            innerItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
-            this.innerItems.clear();
-            for (Item innerItem : innerItems) {
-                this.innerItems.add(new FXOptimizedItem(innerItem));
+            } catch (Exception e) {
+                Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
+                operationErrorsMap.put(parentItem.getValue(), ItemConflicts.ACCESS_ERROR);
+                onConflictsHandler(operationErrorsMap);
+                parentItem.setIcon(FileManagerItemsFactory.getDirectoryUnavaible());
+                this.innerItems.clear();
             }
-            AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, isIconWillChanged, delayImitationMs,refreshers);
-            itemsOperationsPool.execute(appViewRefresher);
-
-        } catch (Exception e) {
-            Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
-            operationErrorsMap.put(parentItem.getValue(), ItemConflicts.ACCESS_ERROR);
-            onConflictsHandler(operationErrorsMap);
-            parentItem.setIcon(FileManagerItemsFactory.getDirectoryUnavaible());
-            this.innerItems.clear();
-        }
+        });
     }
 
     private void showModalWindow(Stage modalWindowStage) {

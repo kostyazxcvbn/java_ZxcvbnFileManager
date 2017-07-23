@@ -3,13 +3,13 @@ package controllers;/**
  */
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
@@ -50,7 +50,6 @@ public class MainController extends Application {
         }
     }
 
-
     public static ResourceBundle getResourceBundle() {
         return resourceBundle;
     }
@@ -73,6 +72,11 @@ public class MainController extends Application {
         }
     }
 
+    private void FatalErrorHandler() {
+        Platform.exit();
+        System.exit(1);
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -87,9 +91,9 @@ public class MainController extends Application {
         DocumentBuilder documentBuilder = null;
         SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try {
-            schema = schemaFactory.newSchema(new File(getClass().getResource("/strings/xsd_app_strings.xsd").getFile()));
+            schema = schemaFactory.newSchema(new File(getClass().getResource("/devconst/schema_valuesid.xsd").getFile()));
         } catch (SAXException e) {
-            e.printStackTrace();
+            FatalErrorHandler();
         }
 
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -98,14 +102,10 @@ public class MainController extends Application {
 
         try {
             documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            devStringsXml = documentBuilder.parse(new File(getClass().getResource("/strings/dev_strings.xml").getFile()));
+            devStringsXml = documentBuilder.parse(new File(getClass().getResource("/devconst/res_paths.xml").getFile()));
 
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-        e.printStackTrace();
-        } catch (IOException e) {
-        e.printStackTrace();
+        } catch (Exception e) {
+            FatalErrorHandler();
         }
         Stage startStage = new Stage(StageStyle.UNDECORATED);;
         setPrimaryStage(primaryStage);
@@ -118,7 +118,7 @@ public class MainController extends Application {
             fxmlLoader.setResources(resourceBundle);
             root = fxmlLoader.load();
         } catch (IOException e) {
-            e.printStackTrace();
+            FatalErrorHandler();
         }
 
         Scene scene=new Scene(root);
