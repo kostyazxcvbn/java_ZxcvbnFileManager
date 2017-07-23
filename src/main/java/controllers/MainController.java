@@ -15,7 +15,6 @@ import org.xml.sax.SAXException;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.File;
@@ -30,14 +29,13 @@ public class MainController extends Application {
     private static Stage primaryStage;
     private static Stage currentStage;
     private static ExecutorService threadLogicUIPool;
-    private static Document devStringsXml;
 
     private Locale locale;
-    private static ResourceBundle resourceBundle;
+    private static ResourceBundle locales;
+    private static ResourceBundle devResources;
 
-
-    public static String getStringValue(String valueId) {
-        return devStringsXml.getElementById(valueId).getTextContent();
+    public static ResourceBundle getDevResources() {
+        return devResources;
     }
 
     public static ExecutorService getThreadLogicUIPool() {
@@ -50,8 +48,8 @@ public class MainController extends Application {
         }
     }
 
-    public static ResourceBundle getResourceBundle() {
-        return resourceBundle;
+    public static ResourceBundle getLocales() {
+        return locales;
     }
 
     public static Stage getCurrentStage() {
@@ -85,28 +83,9 @@ public class MainController extends Application {
     public void start(Stage primaryStage) {
 
         locale=new Locale("ru");
-        resourceBundle=ResourceBundle.getBundle("bundles.locale", locale);
+        locales =ResourceBundle.getBundle("bundles.locale", locale);
+        devResources=ResourceBundle.getBundle("bundles.dev_resources");
 
-        Schema schema = null;
-        DocumentBuilder documentBuilder = null;
-        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        try {
-            schema = schemaFactory.newSchema(new File(getClass().getResource("/devconst/schema_valuesid.xsd").getFile()));
-        } catch (SAXException e) {
-            FatalErrorHandler();
-        }
-
-        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        documentBuilderFactory.setNamespaceAware(true);
-        documentBuilderFactory.setSchema(schema);
-
-        try {
-            documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            devStringsXml = documentBuilder.parse(new File(getClass().getResource("/devconst/res_paths.xml").getFile()));
-
-        } catch (Exception e) {
-            FatalErrorHandler();
-        }
         Stage startStage = new Stage(StageStyle.UNDECORATED);;
         setPrimaryStage(primaryStage);
         setThreadLogicUIPool(Executors.newCachedThreadPool());
@@ -114,8 +93,8 @@ public class MainController extends Application {
 
         Parent root = null;
         try {
-            fxmlLoader = new FXMLLoader(getClass().getResource(getStringValue("fxmlStartScreen")));
-            fxmlLoader.setResources(resourceBundle);
+            fxmlLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlStartScreen")));
+            fxmlLoader.setResources(locales);
             root = fxmlLoader.load();
         } catch (IOException e) {
             FatalErrorHandler();

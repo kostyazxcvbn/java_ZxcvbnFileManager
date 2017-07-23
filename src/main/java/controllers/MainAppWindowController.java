@@ -135,11 +135,13 @@ public class MainAppWindowController implements Initializable {
 
     private ExecutorService itemsOperationsPool;
 
-    private ResourceBundle resourceBundle;
+    private ResourceBundle locales;
+    private ResourceBundle devResources;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        this.resourceBundle=resources;
+        this.locales =resources;
+        this.devResources=MainController.getDevResources();
         initialize();
     }
 
@@ -335,21 +337,21 @@ public class MainAppWindowController implements Initializable {
         Task<Void> buttonsImageLoader = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                toolbNewFolder.setTooltip(new Tooltip(resourceBundle.getString("tooltipCreate")));
-                toolbCopy.setTooltip(new Tooltip(resourceBundle.getString("tooltipCopy")));
-                toolbCut.setTooltip(new Tooltip(resourceBundle.getString("tooltipCut")));
-                toolbDelete.setTooltip(new Tooltip(resourceBundle.getString("tooltipDelete")));
-                toolbPaste.setTooltip(new Tooltip(resourceBundle.getString("tooltipPaste")));
-                toolbShowHiddenItems.setTooltip(new Tooltip(resourceBundle.getString("tooltipShowHide")));
-                toolbUp.setTooltip(new Tooltip(resourceBundle.getString("tooltipBack")));
+                toolbNewFolder.setTooltip(new Tooltip(locales.getString("tooltipCreate")));
+                toolbCopy.setTooltip(new Tooltip(locales.getString("tooltipCopy")));
+                toolbCut.setTooltip(new Tooltip(locales.getString("tooltipCut")));
+                toolbDelete.setTooltip(new Tooltip(locales.getString("tooltipDelete")));
+                toolbPaste.setTooltip(new Tooltip(locales.getString("tooltipPaste")));
+                toolbShowHiddenItems.setTooltip(new Tooltip(locales.getString("tooltipShowHide")));
+                toolbUp.setTooltip(new Tooltip(locales.getString("tooltipBack")));
 
-                Image imageToolbNewFolder = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathCreate")));
-                Image imageToolbCopy = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathCopy")));
-                Image imageToolbCut = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathCut")));
-                Image imageToolbDelete = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathDelete")));
-                Image imageToolbPaste = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathPaste")));
-                Image imageToolbShowHiddenItems = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathShowHide")));
-                Image imageToolbUp = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathBack")));
+                Image imageToolbNewFolder = new Image(getClass().getResourceAsStream(devResources.getString("imagePathCreate")));
+                Image imageToolbCopy = new Image(getClass().getResourceAsStream(devResources.getString("imagePathCopy")));
+                Image imageToolbCut = new Image(getClass().getResourceAsStream(devResources.getString("imagePathCut")));
+                Image imageToolbDelete = new Image(getClass().getResourceAsStream(devResources.getString("imagePathDelete")));
+                Image imageToolbPaste = new Image(getClass().getResourceAsStream(devResources.getString("imagePathPaste")));
+                Image imageToolbShowHiddenItems = new Image(getClass().getResourceAsStream(devResources.getString("imagePathShowHide")));
+                Image imageToolbUp = new Image(getClass().getResourceAsStream(devResources.getString("imagePathBack")));
 
                 Platform.runLater(new Runnable() {
                     @Override
@@ -452,9 +454,9 @@ public class MainAppWindowController implements Initializable {
 
     private void initItemNameConflictModal() {
         if (itemNameConflictModalLoader == null) {
-            itemNameConflictModalLoader = new FXMLLoader(getClass().getResource(MainController.getStringValue("fxmlItemNameConflictModal")));
+            itemNameConflictModalLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlItemNameConflictModal")));
             itemNameConflictModalStage = new Stage();
-            itemNameConflictModalLoader.setResources(MainController.getResourceBundle());
+            itemNameConflictModalLoader.setResources(MainController.getLocales());
 
             try {
                 itemNameConflictModalparent = itemNameConflictModalLoader.load();
@@ -463,7 +465,7 @@ public class MainAppWindowController implements Initializable {
             }
 
             Scene scene = new Scene(itemNameConflictModalparent);
-            itemNameConflictModalStage.setTitle(resourceBundle.getString("titleNameConflictModal"));
+            itemNameConflictModalStage.setTitle(locales.getString("titleNameConflictModal"));
             itemNameConflictModalStage.setScene(scene);
             itemNameConflictModalStage.sizeToScene();
             itemNameConflictModalStage.setResizable(false);
@@ -477,9 +479,9 @@ public class MainAppWindowController implements Initializable {
 
     private void initOkCancelModal() {
         if (okCancelModalLoader == null) {
-            okCancelModalLoader = new FXMLLoader(getClass().getResource(MainController.getStringValue("fxmlOkCancelModal")));
+            okCancelModalLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlOkCancelModal")));
             okCancelModalStage = new Stage();
-            okCancelModalLoader.setResources(MainController.getResourceBundle());
+            okCancelModalLoader.setResources(MainController.getLocales());
 
             try {
                 okCancelModalparent = okCancelModalLoader.load();
@@ -488,7 +490,7 @@ public class MainAppWindowController implements Initializable {
             }
 
             Scene scene = new Scene(okCancelModalparent);
-            okCancelModalStage.setTitle(resourceBundle.getString("titleOkCancelModal"));
+            okCancelModalStage.setTitle(locales.getString("titleOkCancelModal"));
             okCancelModalStage.setScene(scene);
             okCancelModalStage.sizeToScene();
             okCancelModalStage.setResizable(false);
@@ -500,9 +502,9 @@ public class MainAppWindowController implements Initializable {
 
     private void initOperationsConflictModal() {
         if (operationsConflictModalLoader == null) {
-            operationsConflictModalLoader = new FXMLLoader(getClass().getResource(MainController.getStringValue("fxmlOperationsConflictModal")));
+            operationsConflictModalLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlOperationsConflictModal")));
             operationsConflictModalStage = new Stage();
-            operationsConflictModalLoader.setResources(MainController.getResourceBundle());
+            operationsConflictModalLoader.setResources(MainController.getLocales());
 
             try {
                 operationsConflictModalparent = operationsConflictModalLoader.load();
@@ -511,7 +513,7 @@ public class MainAppWindowController implements Initializable {
             }
 
             Scene scene = new Scene(operationsConflictModalparent);
-            operationsConflictModalStage.setTitle(resourceBundle.getString("titleOperationsConflictsModal"));
+            operationsConflictModalStage.setTitle(locales.getString("titleOperationsConflictsModal"));
             operationsConflictModalStage.setScene(scene);
             operationsConflictModalStage.sizeToScene();
             operationsConflictModalStage.setResizable(false);
@@ -523,9 +525,9 @@ public class MainAppWindowController implements Initializable {
 
     private void initNewFolderNameModal() {
         if (newFolderNameModalLoader == null) {
-            newFolderNameModalLoader = new FXMLLoader(getClass().getResource(MainController.getStringValue("fxmlNewFolderNameModal")));
+            newFolderNameModalLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlNewFolderNameModal")));
             newFolderNameModalStage = new Stage();
-            newFolderNameModalLoader.setResources(MainController.getResourceBundle());
+            newFolderNameModalLoader.setResources(MainController.getLocales());
 
             try {
                 newFolderNameModalparent = newFolderNameModalLoader.load();
@@ -534,7 +536,7 @@ public class MainAppWindowController implements Initializable {
             }
 
             Scene scene = new Scene(newFolderNameModalparent);
-            newFolderNameModalStage.setTitle(resourceBundle.getString("titleCreateFolderModal"));
+            newFolderNameModalStage.setTitle(locales.getString("titleCreateFolderModal"));
             newFolderNameModalStage.setScene(scene);
             newFolderNameModalStage.sizeToScene();
             newFolderNameModalStage.setResizable(false);
@@ -653,7 +655,7 @@ public class MainAppWindowController implements Initializable {
     }
 
     private void onFatalErrorHandler() {
-        okCancelModalController.initWarningModal(resourceBundle.getString("textFatalError"),actionOnCloseApp,null);
+        okCancelModalController.initWarningModal(locales.getString("textFatalError"),actionOnCloseApp,null);
         okCancelModalController.getButtonCancel().setVisible(false);
         showModalWindow(okCancelModalStage);
     }
@@ -788,7 +790,7 @@ public class MainAppWindowController implements Initializable {
 
         MainController.setCurrentStage(okCancelModalStage);
 
-        okCancelModalController.initWarningModal(resourceBundle.getString("textDeleteItems"), actionOnDeleteItem, itemsCollection);
+        okCancelModalController.initWarningModal(locales.getString("textDeleteItems"), actionOnDeleteItem, itemsCollection);
         showModalWindow(okCancelModalStage);
     }
 
@@ -802,7 +804,7 @@ public class MainAppWindowController implements Initializable {
     }
 
     public void onClickAbout(ActionEvent actionEvent) {
-        okCancelModalController.initWarningModal(resourceBundle.getString("textAbout"),actionOnAboutInfo,null);
+        okCancelModalController.initWarningModal(locales.getString("textAbout"),actionOnAboutInfo,null);
         okCancelModalController.getButtonCancel().setVisible(false);
         showModalWindow(okCancelModalStage);
     }
@@ -840,7 +842,7 @@ public class MainAppWindowController implements Initializable {
 
     //additional methods
     protected void getOkCancelCloseModal() {
-        okCancelModalController.initWarningModal(resourceBundle.getString("textCloseApp"), actionOnCloseApp, null);
+        okCancelModalController.initWarningModal(locales.getString("textCloseApp"), actionOnCloseApp, null);
         showModalWindow(okCancelModalStage);
     }
 

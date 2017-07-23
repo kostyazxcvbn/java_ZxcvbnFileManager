@@ -12,7 +12,6 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Locale;
 import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.concurrent.*;
@@ -26,7 +25,8 @@ public class StartScreenController implements Initializable{
     private ProgressBar progbStartScreenLoading;
 
     private ExecutorService threadLogicUIPool;
-    private ResourceBundle resourceBundle;
+    private ResourceBundle locales;
+    private ResourceBundle devResources;
 
     public void init() {
         imitateLoading();
@@ -69,14 +69,14 @@ public class StartScreenController implements Initializable{
         Stage stage = MainController.getPrimaryStage();
         Parent root = null;
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(MainController.getStringValue("fxmlMainAppWindow")));
-            fxmlLoader.setResources(MainController.getResourceBundle());
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlMainAppWindow")));
+            fxmlLoader.setResources(MainController.getLocales());
             root = fxmlLoader.load();
         } catch (IOException e) {
             runAppFatalErrorHandler();
         }
         Scene scene=new Scene(root);
-        stage.setTitle(resourceBundle.getString("titleMainAppWindow"));
+        stage.setTitle(locales.getString("titleMainAppWindow"));
         stage.setScene(scene);
         stage.sizeToScene();
         stage.show();
@@ -89,7 +89,8 @@ public class StartScreenController implements Initializable{
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        this.resourceBundle = resources;
+        this.locales = resources;
+        this.devResources=MainController.getDevResources();
     }
 }
 
