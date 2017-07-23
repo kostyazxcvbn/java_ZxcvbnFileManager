@@ -34,7 +34,7 @@ public class AppViewRefresher extends Task<Void> implements IRefreshable {
         this.countDownLatch = new CountDownLatch(refreshers.size());
 
         if (isIconWillChanged) {
-            FileManagerItemsFactory.updateIcon(item, FileManagerItemsFactory.getItemWaiting());
+            item.setIcon(FileManagerItemsFactory.getItemWaiting());
         }
 
         Thread.sleep(delayImitationMs);
@@ -42,7 +42,7 @@ public class AppViewRefresher extends Task<Void> implements IRefreshable {
         countDownLatch.await();
 
         if (isIconWillChanged) {
-            FileManagerItemsFactory.updateIcon(item, FileManagerItemsFactory.getItemImageView(item.getValue()));
+            item.setIcon(FileManagerItemsFactory.getItemImageView(item.getValue()));
         }
 
         return null;

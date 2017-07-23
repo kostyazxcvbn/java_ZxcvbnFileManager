@@ -18,7 +18,7 @@ public class AppEnums {
         CANT_DELETE_ITEM("Can't delete the item."),
         FATAL_APP_ERROR("Fatal application's error."),
         CANT_CREATE_ITEM("Can't create the item."),
-        SECURITY_ERROR("Security error."),
+        ACCESS_ERROR("Access error."),
         ITEM_EXISTS("The Item already exists."),
         ITEM_IS_NOT_COPIED("Can't copy the item.");
 

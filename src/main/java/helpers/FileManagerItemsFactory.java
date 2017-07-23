@@ -240,9 +240,6 @@ public final class FileManagerItemsFactory {
     public static ImageView getDirectoryUnavaible() {
         return new ImageView(directoryUnavaible);
     }
-    public static void updateIcon(FXOptimizedItem item, ImageView icon) {
-        item.setIcon(icon);
-    }
 
     public static FXOptimizedItem getNewfxOptimizedItem(Item item){
         return new FXOptimizedItem(item);

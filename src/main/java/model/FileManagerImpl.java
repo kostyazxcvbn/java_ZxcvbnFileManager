@@ -1,45 +1,32 @@
 package model;
 
-import interfaces.IConflictListener;
-import interfaces.IConlictable;
 import interfaces.IFileManager;
-import interfaces.IRefreshingListener;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.*;
 
 import static model.AppEnums.*;
 
-public class FileManagerImpl implements IFileManager, IConlictable{
+public class FileManagerImpl implements IFileManager{
     private static FileManagerImpl ourInstance = new FileManagerImpl();
 
     private HashSet<Item>copiedItemsBuffer;
     private boolean isCutOperation;
-
-    private IConflictListener conflictListener;
-
-    private ExecutorService onConflictResultTasksPool;
 
     public static FileManagerImpl getInstance() {
         return ourInstance;
     }
 
     private FileManagerImpl() {
-        onConflictResultTasksPool =Executors.newCachedThreadPool();
         copiedItemsBuffer = new HashSet<>();
     }
 
-    protected boolean isCutOperation() {
-        return isCutOperation;
-    }
-
     @Override
-    public void setConflictListener(IConflictListener conflictListener) {
-        this.conflictListener = conflictListener;
+    public boolean isCutOperation() {
+        return isCutOperation;
     }
 
     @Override
@@ -59,6 +46,9 @@ public class FileManagerImpl implements IFileManager, IConlictable{
                 } catch (Exception e) {
                     notDeletedItems.put(item,ItemConflicts.CANT_DELETE_ITEM);
                 }
+            }
+            if (notDeletedItems.isEmpty() && item.isCutted()) {
+                copiedItemsBuffer.remove(item);
             }
         }
         return notDeletedItems;
@@ -150,72 +140,17 @@ public class FileManagerImpl implements IFileManager, IConlictable{
     }
 
     @Override
-    public Map<Item, ItemConflicts> moveItemsTo(HashSet<Item> items, Item destination, boolean isSourceWillBeDeleted) {
-
-        NameConflictState nameConflictState=NameConflictState.NO_CONFLICTS;
-
-        Map<Item, ItemConflicts>notMovedItems = new HashMap<>();
-
-        for (Item item : items) {
-            Path newItem = destination.getPath().resolve(item.getPath().getFileName());
-
-            if (nameConflictState==NameConflictState.NO_CONFLICTS && Files.exists(newItem)){
-                nameConflictState=NameConflictState.UNKNOWN;
-            }
-
-            switch (nameConflictState) {
-                case NO_CONFLICTS:
-                case REPLACE_EXISTING_ALL:{
-                    notMovedItems.putAll(moveWithReplace(item.getPath(),newItem,isSourceWillBeDeleted));
-                    break;
-                }
-                case UNKNOWN:{
-                    nameConflictState=getConflictResult(onConflictResultTasksPool);
-
-                    switch (nameConflictState) {
-                        case REPLACE_EXISTING:{
-                            notMovedItems.putAll(moveWithReplace(item.getPath(),newItem,isSourceWillBeDeleted));
-                            nameConflictState=NameConflictState.NO_CONFLICTS;
-                            break;
-                        }
-                        case REPLACE_EXISTING_ALL:{
-                            notMovedItems.putAll(moveWithReplace(item.getPath(),newItem,isSourceWillBeDeleted));
-                            break;
-                        }
-                        case UNKNOWN: {
-                            notMovedItems.put(item, ItemConflicts.FATAL_APP_ERROR);
-                            nameConflictState = NameConflictState.NO_CONFLICTS;
-                            break;
-                        }
-                        case NOT_REPLACE:{
-                            notMovedItems.put(item, ItemConflicts.ITEM_EXISTS);
-                            nameConflictState = NameConflictState.NO_CONFLICTS;
-                            break;
-                        }
-                        case NOT_REPLACE_ALL:
-                        default:{
-                            notMovedItems.put(item, ItemConflicts.ITEM_EXISTS);
-                            break;
-                        }
-                    }
-                }
-
-                case NOT_REPLACE_ALL:
-                default:{
-                    notMovedItems.put(item, ItemConflicts.ITEM_EXISTS);
-                    break;
-                }
-            }
-        }
-        return notMovedItems;
-    }
-
-    @Override
     public Map<Item, ItemConflicts> moveItemTo(Item source, Item destination, boolean isSourceWillBeDeleted, NameConflictState nameConflictState) {
 
         Map<Item, ItemConflicts>notMovedItems = new HashMap<>(1);
 
+        if (isCutOperation && source.equals(destination)) {
+            notMovedItems.put(source, ItemConflicts.ACCESS_ERROR);
+            return notMovedItems;
+        }
+
         Path newItem = destination.getPath().resolve(source.getPath().getFileName());
+
 
         if (nameConflictState==NameConflictState.NO_CONFLICTS && Files.exists(newItem)){
             nameConflictState=NameConflictState.UNKNOWN;
@@ -223,11 +158,11 @@ public class FileManagerImpl implements IFileManager, IConlictable{
         switch (nameConflictState) {
             case NO_CONFLICTS:
             case REPLACE_EXISTING_ALL:{
-                notMovedItems.putAll(moveWithReplace(source.getPath(),newItem,isSourceWillBeDeleted));
+                notMovedItems.putAll(moveWithReplace(source.getPath(),newItem,(isCutOperation&&copiedItemsBuffer.contains(source)&&source.getPath().equals(newItem))?false:isSourceWillBeDeleted));
                 break;
             }
             case REPLACE_EXISTING:{
-                notMovedItems.putAll(moveWithReplace(source.getPath(),newItem,isSourceWillBeDeleted));
+                notMovedItems.putAll(moveWithReplace(source.getPath(),newItem,(isCutOperation&&copiedItemsBuffer.contains(source)&&source.getPath().equals(newItem))?false:isSourceWillBeDeleted));
                 break;
             }
             case NOT_REPLACE:{
@@ -247,15 +182,9 @@ public class FileManagerImpl implements IFileManager, IConlictable{
     }
 
     @Override
-    public Map<Item,ItemConflicts> pasteItemsFromBuffer(Item destination) {
-        Map<Item,ItemConflicts> operationErrorsMap=moveItemsTo(copiedItemsBuffer,destination,isCutOperation);
-        copiedItemsBuffer.clear();
-        return operationErrorsMap;
-    }
-
-    @Override
     public Map<Item,ItemConflicts> pasteItemFromBuffer(Item source, Item destination, NameConflictState nameConflictState) {
-        return moveItemTo(source,destination,isCutOperation, nameConflictState);
+        Map<Item, ItemConflicts>notMovedItems=moveItemTo(source,destination,isCutOperation, nameConflictState);
+        return notMovedItems;
     }
 
     private Map<Item, ItemConflicts> deleteDirectory(Path directory) {
@@ -357,43 +286,9 @@ public class FileManagerImpl implements IFileManager, IConlictable{
                     }
                 }
             } catch (IOException e) {
-                notMovedItems.put(new Item(source), ItemConflicts.SECURITY_ERROR);
+                notMovedItems.put(new Item(source), ItemConflicts.ACCESS_ERROR);
             }
         }
         return notMovedItems;
-    }
-
-    private NameConflictState getConflictResult(ExecutorService es) {
-
-        Future<NameConflictState>nameConflictResult= onConflictResultTasksPool.submit(new Callable<NameConflictState>() {
-            @Override
-            public NameConflictState call() throws Exception {
-                return notifyListener();
-            }
-        });
-
-        try {
-            return nameConflictResult.get();
-        } catch (Exception e) {
-            return NameConflictState.UNKNOWN;
-        }
-    }
-
-    @Override
-    public void addListener(IConflictListener listener) {
-        conflictListener=listener;
-    }
-
-    @Override
-    public void removeListener() {
-        conflictListener=null;
-    }
-
-    @Override
-    public NameConflictState notifyListener() {
-        if (conflictListener == null) {
-            return null;
-        }
-        return conflictListener.onConflict();
     }
 }

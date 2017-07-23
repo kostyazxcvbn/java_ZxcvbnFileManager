@@ -9,7 +9,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -21,7 +20,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import model.FileManagerImpl;
 import model.Item;
 
@@ -39,7 +37,7 @@ import static helpers.FileManagerItemsFactory.FXOptimizedItem;
  * Created by kostyazxcvbn on 06.07.2017.
  */
 
-public class MainAppWindowController implements IConflictListener, Initializable {
+public class MainAppWindowController implements Initializable {
 
     @FXML
     private Label labelParentPath;
@@ -268,6 +266,7 @@ public class MainAppWindowController implements IConflictListener, Initializable
 
         @Override
         protected Void call() throws Exception {
+
             Map<Item, ItemConflicts> operationError;
             Set<Item> itemsBuffer = fileManager.getBuffer();
 
@@ -286,6 +285,9 @@ public class MainAppWindowController implements IConflictListener, Initializable
                 }
             }
 
+            if(fileManager.isCutOperation())
+                fileManager.getBuffer().clear();
+
             if (!operationErrorsMap.isEmpty()) {
                 onConflictsHandler(operationErrorsMap);
             }
@@ -300,7 +302,6 @@ public class MainAppWindowController implements IConflictListener, Initializable
     public void initialize() {
 
         fileManager = FileManagerImpl.getInstance();
-        ((IConlictable) fileManager).addListener(this);
 
         threadLogicUIPool = MainController.getThreadLogicUIPool();
         itemsOperationsPool= Executors.newCachedThreadPool();
@@ -663,6 +664,7 @@ public class MainAppWindowController implements IConflictListener, Initializable
         FXOptimizedItem tempSelectedLink = parentItem;
         FXOptimizedItem tempSelected = tempSelectedLink;
         boolean isIconWillChanged=false;
+        long delayImitation=0;
 
         parentItem = (FXOptimizedItem) treevItemsTree.getSelectionModel().getSelectedItem();
         if (event.getClickCount() == 1) {
@@ -673,8 +675,9 @@ public class MainAppWindowController implements IConflictListener, Initializable
 
             if (parentItem.isLeaf() || parentItem.isExpanded()) {
                 isIconWillChanged = true;
-                refreshItems(parentItem, isIconWillChanged, 2000, itemsTreeRefreshListener, itemContentContainerListener);
+                delayImitation=2000;
             }
+            refreshItems(parentItem, isIconWillChanged, delayImitation, itemsTreeRefreshListener, itemContentContainerListener);
         }
     }
 
@@ -752,9 +755,7 @@ public class MainAppWindowController implements IConflictListener, Initializable
 
         for (FXOptimizedItem selectedItem : selectedItems) {
             if (!operationErrorsMap.containsKey(selectedItem.getItem())) {
-                FileManagerItemsFactory.updateIcon(
-                        selectedItem,
-                        (selectedItem.isDirectory()) ? FileManagerItemsFactory.getDirectoryCutted() : FileManagerItemsFactory.getFileCutted());
+                selectedItem.setIcon((selectedItem.isDirectory()) ? FileManagerItemsFactory.getDirectoryCutted() : FileManagerItemsFactory.getFileCutted());
             }
         }
 
@@ -856,7 +857,7 @@ public class MainAppWindowController implements IConflictListener, Initializable
 
         } catch (Exception e) {
             Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
-            operationErrorsMap.put(parentItem.getValue(), ItemConflicts.SECURITY_ERROR);
+            operationErrorsMap.put(parentItem.getValue(), ItemConflicts.ACCESS_ERROR);
             onConflictsHandler(operationErrorsMap);
             parentItem.setIcon(FileManagerItemsFactory.getDirectoryUnavaible());
             this.innerItems.clear();
@@ -866,24 +867,5 @@ public class MainAppWindowController implements IConflictListener, Initializable
     private void showModalWindow(Stage modalWindowStage) {
         MainController.setCurrentStage(modalWindowStage);
         modalWindowStage.show();
-    }
-
-    @Override
-    public NameConflictState onConflict() {
-
-        Platform.runLater(() -> showModalWindow(itemNameConflictModalStage));
-        NameConflictState nameConflictState = null;
-
-        itemNameConflictModalController.setWaitingResultLock(lock);
-
-        synchronized (lock) {
-            try {
-                lock.wait();
-            } catch (InterruptedException e) {
-                return null;
-            }
-        }
-
-        return nameConflictState;
     }
 }
