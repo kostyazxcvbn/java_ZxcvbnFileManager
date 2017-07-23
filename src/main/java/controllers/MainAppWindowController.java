@@ -12,6 +12,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -24,11 +25,9 @@ import javafx.stage.WindowEvent;
 import model.FileManagerImpl;
 import model.Item;
 
+import java.net.URL;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,7 +39,7 @@ import static helpers.FileManagerItemsFactory.FXOptimizedItem;
  * Created by kostyazxcvbn on 06.07.2017.
  */
 
-public class MainAppWindowController implements IConflictListener {
+public class MainAppWindowController implements IConflictListener, Initializable {
 
     @FXML
     private Label labelParentPath;
@@ -137,6 +136,14 @@ public class MainAppWindowController implements IConflictListener {
     private IOkCancelHandler actionOnCreateFolder;
 
     private ExecutorService itemsOperationsPool;
+
+    private ResourceBundle resourceBundle;
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        this.resourceBundle=resources;
+        initialize();
+    }
 
     //inner runnable subtasks
     private class SubfoldersLoader extends Task<Void> {
@@ -327,21 +334,21 @@ public class MainAppWindowController implements IConflictListener {
         Task<Void> buttonsImageLoader = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                toolbNewFolder.setTooltip(new Tooltip("Create a folder..."));
-                toolbCopy.setTooltip(new Tooltip("Copy item(s)"));
-                toolbCut.setTooltip(new Tooltip("Cut item(s)"));
-                toolbDelete.setTooltip(new Tooltip("Delete item(s)"));
-                toolbPaste.setTooltip(new Tooltip("Paste item(s)"));
-                toolbShowHiddenItems.setTooltip(new Tooltip("Show/hide hidden items"));
-                toolbUp.setTooltip(new Tooltip("Back"));
+                toolbNewFolder.setTooltip(new Tooltip(resourceBundle.getString("tooltipCreate")));
+                toolbCopy.setTooltip(new Tooltip(resourceBundle.getString("tooltipCopy")));
+                toolbCut.setTooltip(new Tooltip(resourceBundle.getString("tooltipCut")));
+                toolbDelete.setTooltip(new Tooltip(resourceBundle.getString("tooltipDelete")));
+                toolbPaste.setTooltip(new Tooltip(resourceBundle.getString("tooltipPaste")));
+                toolbShowHiddenItems.setTooltip(new Tooltip(resourceBundle.getString("tooltipShowHide")));
+                toolbUp.setTooltip(new Tooltip(resourceBundle.getString("tooltipBack")));
 
-                Image imageToolbNewFolder = new Image(getClass().getResourceAsStream("/img/iconNewFolder.png"));
-                Image imageToolbCopy = new Image(getClass().getResourceAsStream("/img/iconCopy.png"));
-                Image imageToolbCut = new Image(getClass().getResourceAsStream("/img/iconCut.png"));
-                Image imageToolbDelete = new Image(getClass().getResourceAsStream("/img/iconRemove.png"));
-                Image imageToolbPaste = new Image(getClass().getResourceAsStream("/img/iconPaste.png"));
-                Image imageToolbShowHiddenItems = new Image(getClass().getResourceAsStream("/img/iconHide.png"));
-                Image imageToolbUp = new Image(getClass().getResourceAsStream("/img/iconLevelUp.png"));
+                Image imageToolbNewFolder = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathCreate")));
+                Image imageToolbCopy = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathCopy")));
+                Image imageToolbCut = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathCut")));
+                Image imageToolbDelete = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathDelete")));
+                Image imageToolbPaste = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathPaste")));
+                Image imageToolbShowHiddenItems = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathShowHide")));
+                Image imageToolbUp = new Image(getClass().getResourceAsStream(MainController.getStringValue("imagePathBack")));
 
                 Platform.runLater(new Runnable() {
                     @Override
@@ -444,8 +451,9 @@ public class MainAppWindowController implements IConflictListener {
 
     private void initItemNameConflictModal() {
         if (itemNameConflictModalLoader == null) {
-            itemNameConflictModalLoader = new FXMLLoader(getClass().getResource("/fxml/ItemNameConflictModal.fxml"));
+            itemNameConflictModalLoader = new FXMLLoader(getClass().getResource(MainController.getStringValue("fxmlItemNameConflictModal")));
             itemNameConflictModalStage = new Stage();
+            itemNameConflictModalLoader.setResources(MainController.getResourceBundle());
 
             try {
                 itemNameConflictModalparent = itemNameConflictModalLoader.load();
@@ -454,7 +462,7 @@ public class MainAppWindowController implements IConflictListener {
             }
 
             Scene scene = new Scene(itemNameConflictModalparent);
-            itemNameConflictModalStage.setTitle("Please choose an action...");
+            itemNameConflictModalStage.setTitle(resourceBundle.getString("titleNameConflictModal"));
             itemNameConflictModalStage.setScene(scene);
             itemNameConflictModalStage.sizeToScene();
             itemNameConflictModalStage.setResizable(false);
@@ -462,19 +470,15 @@ public class MainAppWindowController implements IConflictListener {
             itemNameConflictModalStage.initOwner(MainController.getPrimaryStage());
             itemNameConflictModalController = itemNameConflictModalLoader.getController();
             itemNameConflictModalController.setWaitingResultLock(lock);
-            scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {
-                @Override
-                public void handle(WindowEvent event) {
-                    event.consume();
-                }
-            });
+            scene.getWindow().setOnCloseRequest(event -> event.consume());
         }
     }
 
     private void initOkCancelModal() {
         if (okCancelModalLoader == null) {
-            okCancelModalLoader = new FXMLLoader(getClass().getResource("/fxml/OkCancelContainerModal.fxml"));
+            okCancelModalLoader = new FXMLLoader(getClass().getResource(MainController.getStringValue("fxmlOkCancelModal")));
             okCancelModalStage = new Stage();
+            okCancelModalLoader.setResources(MainController.getResourceBundle());
 
             try {
                 okCancelModalparent = okCancelModalLoader.load();
@@ -483,7 +487,7 @@ public class MainAppWindowController implements IConflictListener {
             }
 
             Scene scene = new Scene(okCancelModalparent);
-            okCancelModalStage.setTitle("Warning!");
+            okCancelModalStage.setTitle(resourceBundle.getString("titleOkCancelModal"));
             okCancelModalStage.setScene(scene);
             okCancelModalStage.sizeToScene();
             okCancelModalStage.setResizable(false);
@@ -495,8 +499,9 @@ public class MainAppWindowController implements IConflictListener {
 
     private void initOperationsConflictModal() {
         if (operationsConflictModalLoader == null) {
-            operationsConflictModalLoader = new FXMLLoader(getClass().getResource("/fxml/OperationsConflictModal.fxml"));
+            operationsConflictModalLoader = new FXMLLoader(getClass().getResource(MainController.getStringValue("fxmlOperationsConflictModal")));
             operationsConflictModalStage = new Stage();
+            operationsConflictModalLoader.setResources(MainController.getResourceBundle());
 
             try {
                 operationsConflictModalparent = operationsConflictModalLoader.load();
@@ -505,7 +510,7 @@ public class MainAppWindowController implements IConflictListener {
             }
 
             Scene scene = new Scene(operationsConflictModalparent);
-            operationsConflictModalStage.setTitle("Operation's conflicts");
+            operationsConflictModalStage.setTitle(resourceBundle.getString("titleOperationsConflictsModal"));
             operationsConflictModalStage.setScene(scene);
             operationsConflictModalStage.sizeToScene();
             operationsConflictModalStage.setResizable(false);
@@ -517,8 +522,9 @@ public class MainAppWindowController implements IConflictListener {
 
     private void initNewFolderNameModal() {
         if (newFolderNameModalLoader == null) {
-            newFolderNameModalLoader = new FXMLLoader(getClass().getResource("/fxml/NewFolderNameModal.fxml"));
+            newFolderNameModalLoader = new FXMLLoader(getClass().getResource(MainController.getStringValue("fxmlNewFolderNameModal")));
             newFolderNameModalStage = new Stage();
+            newFolderNameModalLoader.setResources(MainController.getResourceBundle());
 
             try {
                 newFolderNameModalparent = newFolderNameModalLoader.load();
@@ -527,7 +533,7 @@ public class MainAppWindowController implements IConflictListener {
             }
 
             Scene scene = new Scene(newFolderNameModalparent);
-            newFolderNameModalStage.setTitle("New folder...");
+            newFolderNameModalStage.setTitle(resourceBundle.getString("titleCreateFolderModal"));
             newFolderNameModalStage.setScene(scene);
             newFolderNameModalStage.sizeToScene();
             newFolderNameModalStage.setResizable(false);
@@ -646,7 +652,7 @@ public class MainAppWindowController implements IConflictListener {
     }
 
     private void onFatalErrorHandler() {
-        okCancelModalController.initWarningModal("The fatal application error happened and the application will be closed!",actionOnCloseApp,null);
+        okCancelModalController.initWarningModal(resourceBundle.getString("textFatalError"),actionOnCloseApp,null);
         okCancelModalController.getButtonCancel().setVisible(false);
         showModalWindow(okCancelModalStage);
     }
@@ -780,7 +786,7 @@ public class MainAppWindowController implements IConflictListener {
 
         MainController.setCurrentStage(okCancelModalStage);
 
-        okCancelModalController.initWarningModal("Selected items will be deleted! Are you sure?", actionOnDeleteItem, itemsCollection);
+        okCancelModalController.initWarningModal(resourceBundle.getString("textDeleteItems"), actionOnDeleteItem, itemsCollection);
         showModalWindow(okCancelModalStage);
     }
 
@@ -794,7 +800,7 @@ public class MainAppWindowController implements IConflictListener {
     }
 
     public void onClickAbout(ActionEvent actionEvent) {
-        okCancelModalController.initWarningModal("It's my test application!",actionOnAboutInfo,null);
+        okCancelModalController.initWarningModal(resourceBundle.getString("textAbout"),actionOnAboutInfo,null);
         okCancelModalController.getButtonCancel().setVisible(false);
         showModalWindow(okCancelModalStage);
     }
@@ -832,7 +838,7 @@ public class MainAppWindowController implements IConflictListener {
 
     //additional methods
     protected void getOkCancelCloseModal() {
-        okCancelModalController.initWarningModal("Now the application will be closed. Are you sure?", actionOnCloseApp, null);
+        okCancelModalController.initWarningModal(resourceBundle.getString("textCloseApp"), actionOnCloseApp, null);
         showModalWindow(okCancelModalStage);
     }
 

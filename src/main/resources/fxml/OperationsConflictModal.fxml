@@ -30,7 +30,7 @@
                         <Image url="@../img/windowWarning.png" />
                      </image>
                   </ImageView>
-                  <Label text="Following conflicts were happened in the executing process:" wrapText="true">
+                  <Label text="%textOperationsConflicts" wrapText="true">
                      <HBox.margin>
                         <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
                      </HBox.margin>
@@ -42,8 +42,8 @@
             </HBox>
             <TableView fx:id="tablevItemsConflictContainer" prefWidth="630.0" style="-fx-control-inner-background-alt: -fx-control-inner-background; -fx-table-cell-border-color: transparent;" VBox.vgrow="ALWAYS">
               <columns>
-                <TableColumn fx:id="columnItemsWithConflicts" maxWidth="1.7976931348623157E308" minWidth="200.0" prefWidth="500.0" text="Items with conflicts" />
-                <TableColumn fx:id="columnDescription" maxWidth="1.7976931348623157E308" minWidth="120.0" prefWidth="120.0" text="Description" />
+                <TableColumn fx:id="columnItemsWithConflicts" maxWidth="1.7976931348623157E308" minWidth="200.0" prefWidth="500.0" text="%columnItemsWithConflicts" />
+                <TableColumn fx:id="columnDescription" maxWidth="1.7976931348623157E308" minWidth="120.0" prefWidth="120.0" text="%columnDescription" />
               </columns>
                <VBox.margin>
                   <Insets left="10.0" right="10.0" top="5.0" />
