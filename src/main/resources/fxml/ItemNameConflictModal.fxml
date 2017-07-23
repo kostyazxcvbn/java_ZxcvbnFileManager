@@ -23,7 +23,7 @@
                   <Image url="@../img/windowWarning.png" />
                </image>
             </ImageView>
-            <Label text="A folder or a file with the same name already exists! Please choose next action for the item:" wrapText="true">
+            <Label text="%textNameConflict" wrapText="true">
                <HBox.margin>
                   <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
                </HBox.margin>
@@ -35,7 +35,7 @@
       </HBox>
       <VBox prefWidth="300.0" VBox.vgrow="ALWAYS">
          <children>
-            <RadioButton mnemonicParsing="false" selected="true" text="replace existing" fx:id="radiobReplaceExisting">
+            <RadioButton mnemonicParsing="false" selected="true" text="%textRadioReplaceExisting" fx:id="radiobReplaceExisting">
                <VBox.margin>
                   <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                </VBox.margin>
@@ -43,7 +43,7 @@
                   <ToggleGroup fx:id="ConflictNameAction" />
                </toggleGroup>
             </RadioButton>
-            <RadioButton mnemonicParsing="false" text="don't replace existing" toggleGroup="$ConflictNameAction" fx:id="radiobNotReplaceExisting">
+            <RadioButton mnemonicParsing="false" text="%textRadioDontReplaceExisting" toggleGroup="$ConflictNameAction" fx:id="radiobNotReplaceExisting">
                <VBox.margin>
                   <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                </VBox.margin>
@@ -52,7 +52,7 @@
       </VBox>
       <HBox prefWidth="300.0">
          <children>
-            <CheckBox mnemonicParsing="false" text="for all items" HBox.hgrow="NEVER" fx:id="checkbForAllItems">
+            <CheckBox mnemonicParsing="false" text="%textCheckBofForAll" HBox.hgrow="NEVER" fx:id="checkbForAllItems">
                <HBox.margin>
                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </HBox.margin>

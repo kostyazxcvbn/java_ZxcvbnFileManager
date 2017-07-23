@@ -28,93 +28,93 @@
          <children>
             <MenuBar VBox.vgrow="NEVER">
               <menus>
-                <Menu mnemonicParsing="false" text="File">
+                <Menu mnemonicParsing="false" text="%menuItemFile">
                   <items>
-                        <MenuItem fx:id="miNewFolder" mnemonicParsing="false" onAction="#onCreateNewFolderPressed" text="New folder..." />
-                        <MenuItem fx:id="miClose" mnemonicParsing="false" onAction="#onClosePressed" text="Close" />
+                        <MenuItem fx:id="miNewFolder" mnemonicParsing="false" onAction="#onClickCreateFolder" text="%menuTextCreate" />
+                        <MenuItem fx:id="miClose" mnemonicParsing="false" onAction="#onClickClose" text="%menuTextClose" />
                   </items>
                 </Menu>
-                <Menu mnemonicParsing="false" text="Edit">
+                <Menu mnemonicParsing="false" text="%menuItemEdit">
                   <items>
-                    <MenuItem fx:id="miCopy" mnemonicParsing="false" onAction="#copyItems" text="Copy" />
-                        <MenuItem fx:id="miCut" mnemonicParsing="false" onAction="#cutItems" text="Cut" />
-                        <MenuItem fx:id="miPaste" mnemonicParsing="false" onAction="#pasteItems" text="Paste" />
-                        <MenuItem fx:id="miDelete" mnemonicParsing="false" onAction="#deleteItems" text="Delete" />
+                    <MenuItem fx:id="miCopy" mnemonicParsing="false" onAction="#onClickCopy" text="%menuTextCopy" />
+                        <MenuItem fx:id="miCut" mnemonicParsing="false" onAction="#onClickCut" text="%menuTextCut" />
+                        <MenuItem fx:id="miPaste" mnemonicParsing="false" onAction="#onClickPaste" text="%menuTextPaste" />
+                        <MenuItem fx:id="miDelete" mnemonicParsing="false" onAction="#onClickDelete" text="%menuTextDelete" />
                   </items>
                 </Menu>
-                <Menu mnemonicParsing="false" text="View">
+                <Menu mnemonicParsing="false" text="%menuItemView">
                   <items>
-                        <CheckMenuItem fx:id="cmiShowHiddenItems" mnemonicParsing="false" onAction="#showHiddenItems" text="Show hidden items" />
+                        <CheckMenuItem fx:id="cmiShowHiddenItems" mnemonicParsing="false" onAction="#onClickMenuShowHide" text="%menuTextShowHide" />
                   </items>
                 </Menu>
-                  <Menu mnemonicParsing="false" text="Help">
+                  <Menu mnemonicParsing="false" text="%menuItemHelp">
                      <items>
-                        <MenuItem fx:id="miAbout" mnemonicParsing="false" onAction="#showAboutInfo" text="About" />
+                        <MenuItem fx:id="miAbout" mnemonicParsing="false" onAction="#onClickAbout" text="%menuTextAbout" />
                      </items>
                   </Menu>
               </menus>
             </MenuBar>
             <ToolBar minHeight="40.0" minWidth="800.0" prefHeight="40.0" prefWidth="1000.0">
               <items>
-                <Button fx:id="toolbNewFolder" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onCreateNewFolderPressed" prefHeight="32.0" prefWidth="32.0" text="NewFolder" />
-                <Button fx:id="toolbCopy" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#copyItems" prefHeight="32.0" prefWidth="32.0" text="Copy" />
-                  <Button fx:id="toolbCut" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#cutItems" prefHeight="32.0" prefWidth="32.0" text="Cut" />
-                  <Button fx:id="toolbPaste" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#pasteItems" prefHeight="32.0" prefWidth="32.0" text="Edit" />
-                  <Button fx:id="toolbDelete" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#deleteItems" prefHeight="32.0" prefWidth="32.0" text="Delete" />
+                <Button fx:id="toolbNewFolder" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickCreateFolder" prefHeight="32.0" prefWidth="32.0"/>
+                <Button fx:id="toolbCopy" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickCopy" prefHeight="32.0" prefWidth="32.0"/>
+                  <Button fx:id="toolbCut" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickCut" prefHeight="32.0" prefWidth="32.0"/>
+                  <Button fx:id="toolbPaste" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickPaste" prefHeight="32.0" prefWidth="32.0"/>
+                  <Button fx:id="toolbDelete" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickDelete" prefHeight="32.0" prefWidth="32.0"/>
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
-                  <ToggleButton fx:id="toolbShowHiddenItems" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onButtonPressedshowHiddenItems" prefHeight="32.0" prefWidth="32.0" text="Show hidden items" />
+                  <ToggleButton fx:id="toolbShowHiddenItems" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickButtonShowHide" prefHeight="32.0" prefWidth="32.0"/>
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
-                  <Button fx:id="toolbUp" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#getLevelUp" prefHeight="32.0" prefWidth="32.0" text="Up" />
+                  <Button fx:id="toolbUp" contentDisplay="GRAPHIC_ONLY" maxHeight="32.0" maxWidth="32.0" minHeight="32.0" minWidth="32.0" mnemonicParsing="false" onAction="#onClickBack" prefHeight="32.0" prefWidth="32.0"/>
               </items>
             </ToolBar>
          </children>
       </VBox>
       <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="64.0">
          <children>
-            <TitledPane animated="false" collapsible="false" maxHeight="1.7976931348623157E308" minWidth="800.0" prefWidth="1000.0" text="Main panel" VBox.vgrow="ALWAYS">
+            <TitledPane animated="false" collapsible="false" maxHeight="1.7976931348623157E308" minWidth="800.0" prefWidth="1000.0" text="%titleItemsArea" VBox.vgrow="ALWAYS">
                <content>
                   <SplitPane dividerPositions="0.25" minWidth="800.0" prefWidth="1000.0" HBox.hgrow="ALWAYS">
                     <items>
                       <AnchorPane>
                            <children>
-                              <TreeView fx:id="treevItemsTree" editable="true" onMouseClicked="#loadItemContent" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                              <TreeView fx:id="treevItemsTree" editable="true" onMouseClicked="#onClickItemsTree" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                            </children>
                         </AnchorPane>
                       <AnchorPane>
                            <children>
-                              <TableView fx:id="tablevDirContent" style="-fx-control-inner-background-alt: -fx-control-inner-background; -fx-table-cell-border-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <TableView fx:id="innerItemsList" onMouseClicked="#onClickItemsTable" style="-fx-control-inner-background-alt: -fx-control-inner-background; -fx-table-cell-border-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                 <columns>
                                     <TableColumn fx:id="columnItemImage" prefWidth="40.0" resizable="false">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="icon" />
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn fx:id="columnName" minWidth="150" prefWidth="150" text="Name">
+                                    <TableColumn fx:id="columnName" minWidth="150" prefWidth="150" text="%columnName">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="name" />
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn fx:id="columnType" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" text="Type">
+                                    <TableColumn fx:id="columnType" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" text="%columnType">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="type" />
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn fx:id="columnCreated" minWidth="100" prefWidth="150" text="Created date">
+                                    <TableColumn fx:id="columnCreated" minWidth="100" prefWidth="150" text="%columnCreatedDate">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="createdDate" />
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn fx:id="columnLastModified" minWidth="100" prefWidth="150" text="Last modified date">
+                                    <TableColumn fx:id="columnLastModified" minWidth="100" prefWidth="150" text="%columnLastModified">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="lastModifiedDate" />
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn fx:id="columnSize" maxWidth="-1.0" minWidth="100.0" prefWidth="100.0" text="Size">
+                                    <TableColumn fx:id="columnSize" maxWidth="-1.0" minWidth="100.0" prefWidth="100.0" text="%columnSize">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="size" />
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn fx:id="columnAttributes" maxWidth="100.0" minWidth="70.0" prefWidth="70.0" resizable="false" text="Attributes">
+                                    <TableColumn fx:id="columnAttributes" maxWidth="100.0" minWidth="70.0" prefWidth="70.0" resizable="false" text="%columnAttributes">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="attributes" />
                                         </cellValueFactory>
@@ -126,14 +126,14 @@
                                  <contextMenu>
                                     <ContextMenu>
                                       <items>
-                                          <MenuItem fx:id="contextNewFolder" mnemonicParsing="false" onAction="#onCreateNewFolderPressed" text="New Folder..." />
+                                          <MenuItem fx:id="contextBack" mnemonicParsing="false" onAction="#onClickBack" text="%menuTextBack" />
                                           <SeparatorMenuItem mnemonicParsing="false" />
-                                          <MenuItem fx:id="contextBack" mnemonicParsing="false" onAction="#getLevelUp" text="Back" />
+                                          <MenuItem fx:id="contextNewFolder" mnemonicParsing="false" onAction="#onClickCreateFolder" text="%menuTextCreate" />
                                           <SeparatorMenuItem mnemonicParsing="false" />
-                                        <MenuItem fx:id="contextCopy" mnemonicParsing="false" onAction="#copyItems" text="Copy" />
-                                          <MenuItem fx:id="contextCut" mnemonicParsing="false" onAction="#cutItems" text="Cut" />
-                                          <MenuItem fx:id="contextPaste" mnemonicParsing="false" onAction="#pasteItems" text="Paste" />
-                                          <MenuItem fx:id="contextDelete" mnemonicParsing="false" text="Delete" onAction="#deleteItems"/>
+                                        <MenuItem fx:id="contextCopy" mnemonicParsing="false" onAction="#onClickCopy" text="%menuTextCopy" />
+                                          <MenuItem fx:id="contextCut" mnemonicParsing="false" onAction="#onClickCut" text="%menuTextCut" />
+                                          <MenuItem fx:id="contextPaste" mnemonicParsing="false" onAction="#onClickPaste" text="%menuTextPaste" />
+                                          <MenuItem fx:id="contextDelete" mnemonicParsing="false" text="%menuTextDelete" onAction="#onClickDelete"/>
                                       </items>
                                     </ContextMenu>
                                  </contextMenu>

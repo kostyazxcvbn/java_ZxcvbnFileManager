@@ -1,6 +1,8 @@
 package helpers;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -19,8 +21,8 @@ public final class FileManagerItemsFactory {
     private static FXOptimizedItem root;
 
     private static Image directoryUnavaible;
-    private static Image  directoryHidden;
-    private static Image  directoryCutted;
+    private static Image directoryHidden;
+    private static Image directoryCutted;
     private static Image directoryNormal;
     private static Image fileUnavaible;
     private static Image fileHidden;
@@ -34,14 +36,79 @@ public final class FileManagerItemsFactory {
 
     public static class FXOptimizedItem extends TreeItem<Item>{
 
-        private ImageView itemIcon;
+        private SimpleObjectProperty<ImageView> icon;
+        private SimpleStringProperty name;
+        private SimpleStringProperty type;
+        private SimpleStringProperty createdDate;
+        private SimpleStringProperty modifiedDate;
+        private SimpleStringProperty size;
+        private SimpleStringProperty attributes;
 
         public FXOptimizedItem(Item value) {
             super(value, getItemImageView(value));
-            itemIcon = getItemImageView(value);//TODO  SimpleObjectProperty
+            icon=new SimpleObjectProperty<ImageView>(getItemImageView(value));
+            name=new SimpleStringProperty(getValue().getName());
+            type=new SimpleStringProperty(getValue().getType());
+            createdDate=new SimpleStringProperty(getValue().getCreatedDate());
+            modifiedDate=new SimpleStringProperty(getValue().getLastModifiedDate());
+            size=new SimpleStringProperty(getValue().getSize());
+            attributes=new SimpleStringProperty(getValue().getAttributes());
         }
+
+        public ImageView getIcon() {
+            return icon.get();
+        }
+
+        public SimpleObjectProperty<ImageView>iconProperty() {
+            return icon;
+        }
+
+        public String getName() {
+            return name.get();
+        }
+
+        public SimpleStringProperty nameProperty() {
+            return name;
+        }
+
+        public String getType() {
+            return type.get();
+        }
+
+        public SimpleStringProperty typeProperty() {
+            return type;
+        }
+
         public String getCreatedDate() {
-            return getValue().getCreatedDate();
+            return createdDate.get();
+        }
+
+        public SimpleStringProperty createdDateProperty() {
+            return createdDate;
+        }
+
+        public String getModifiedDate() {
+            return modifiedDate.get();
+        }
+
+        public SimpleStringProperty modifiedDateProperty() {
+            return modifiedDate;
+        }
+
+        public String getSize() {
+            return size.get();
+        }
+
+        public SimpleStringProperty sizeProperty() {
+            return size;
+        }
+
+        public String getAttributes() {
+            return attributes.get();
+        }
+
+        public SimpleStringProperty attributesProperty() {
+            return attributes;
         }
 
         public boolean isDirectory(){
@@ -52,36 +119,13 @@ public final class FileManagerItemsFactory {
             return getValue();
         }
 
-        public String getAttributes() {
-            return getValue().getAttributes();
-        }
-
         public void setIcon(ImageView itemIcon) {
-            this.itemIcon = itemIcon;
-        }
-
-        public String getName() {
-            return getValue().getName();
-        }
-
-        public String getType() {
-            return getValue().getType();
-        }
-
-        public String getSize() {
-            return getValue().getSize();
+            icon.set(itemIcon);
+            Platform.runLater(()->this.setGraphic(new ImageView(itemIcon.getImage())));
         }
 
         public boolean isHidden() {
             return getValue().isHidden();
-        }
-
-        public String getLastModifiedDate() {
-            return getValue().getLastModifiedDate();
-        }
-
-        public ImageView getIcon() {
-            return itemIcon;
         }
 
         public FXOptimizedItem getParentItem() {
@@ -161,7 +205,7 @@ public final class FileManagerItemsFactory {
         return root;
     }
 
-    private static ImageView getItemImageView(Item item){
+    public static ImageView getItemImageView(Item item){
 
         try {
             if (item.isRoot()) {
@@ -195,22 +239,6 @@ public final class FileManagerItemsFactory {
     public static ImageView getFileCutted() {return new ImageView(fileCutted);}
     public static ImageView getDirectoryUnavaible() {
         return new ImageView(directoryUnavaible);
-    }
-    public static void updateIcon(Object itemsContainer, FXOptimizedItem item, ImageView icon) {
-        if (itemsContainer instanceof TreeView) {
-            Platform.runLater(()->item.setGraphic(icon));
-        }
-        if (itemsContainer instanceof TableView) {
-            item.setIcon(icon);
-            Platform.runLater(() ->{
-                item.setGraphic(icon);
-                ((TableView)itemsContainer).refresh();
-            });
-        }
-        if (itemsContainer == null) {
-            return;
-        }
-
     }
 
     public static FXOptimizedItem getNewfxOptimizedItem(Item item){

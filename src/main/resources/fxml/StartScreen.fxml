@@ -13,7 +13,7 @@
       <Rectangle fill="WHITE" height="90.0" stroke="BLACK" strokeMiterLimit="0.0" strokeType="INSIDE" strokeWidth="0.0" width="300.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
       <VBox alignment="TOP_CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <Label text="Welcome to The ZxcvbnFileManger!" textFill="#b100ff">
+            <Label text="%textStartScreen" textFill="#b100ff">
                <VBox.margin>
                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </VBox.margin>
@@ -28,7 +28,7 @@
                         <Insets bottom="1.0" left="10.0" right="10.0" top="10.0" />
                      </VBox.margin>
                   </ProgressBar>
-                  <Label fx:id="labelStartScreenLoading" text="loading...please, wait...">
+                  <Label fx:id="labelStartScreenLoading" text="%textWaitingLoading">
                      <VBox.margin>
                         <Insets bottom="10.0" left="10.0" right="10.0" />
                      </VBox.margin>

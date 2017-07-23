@@ -9,9 +9,9 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -20,17 +20,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import model.FileManagerImpl;
 import model.Item;
 
+import java.net.URL;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static model.AppEnums.*;
 import static helpers.FileManagerItemsFactory.FXOptimizedItem;
@@ -39,7 +37,7 @@ import static helpers.FileManagerItemsFactory.FXOptimizedItem;
  * Created by kostyazxcvbn on 06.07.2017.
  */
 
-public class MainAppWindowController implements IConflictListener {
+public class MainAppWindowController implements Initializable {
 
     @FXML
     private Label labelParentPath;
@@ -72,7 +70,7 @@ public class MainAppWindowController implements IConflictListener {
     @FXML
     private TreeView treevItemsTree;
     @FXML
-    private TableView tablevDirContent;
+    private TableView innerItemsList;
     @FXML
     private Button toolbCopy;
     @FXML
@@ -102,7 +100,7 @@ public class MainAppWindowController implements IConflictListener {
 
     private IFileManager fileManager;
     private FXOptimizedItem parentItem;
-    private ObservableList<FXOptimizedItem> selectedItemsList;
+    private ObservableList<FXOptimizedItem> innerItems;
     private ExecutorService threadLogicUIPool;
     private boolean showHiddenItemsState;
 
@@ -135,36 +133,54 @@ public class MainAppWindowController implements IConflictListener {
     private Object lock;
     private IOkCancelHandler actionOnCreateFolder;
 
+    private ExecutorService itemsOperationsPool;
+
+    private ResourceBundle locales;
+    private ResourceBundle devResources;
+
     @Override
-    public NameConflictState onConflict() {
-
-        Platform.runLater(() -> showModalWindow(itemNameConflictModalStage));
-        NameConflictState nameConflictState = null;
-
-        itemNameConflictModalController.setWaitingResultLock(lock);
-
-        synchronized (lock) {
-            try {
-                lock.wait();
-            } catch (InterruptedException e) {
-                return null;
-            }
-        }
-
-        return nameConflictState;
+    public void initialize(URL location, ResourceBundle resources) {
+        this.locales =resources;
+        this.devResources=MainController.getDevResources();
+        initialize();
     }
 
     //inner runnable subtasks
+    private class SubfoldersLoader extends Task<Void> {
+
+        CountDownLatch countDownLatch;
+        FXOptimizedItem parentItem;
+        ObservableList<FXOptimizedItem> innerItemsList;
+
+        public SubfoldersLoader(FXOptimizedItem parentItem, ObservableList<FXOptimizedItem> innerItemsList, CountDownLatch countDownLatch) {
+            this.countDownLatch = countDownLatch;
+            this.parentItem = parentItem;
+            this.innerItemsList = innerItemsList;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+
+            ObservableList<TreeItem<Item>> childrenDirectories = parentItem.getChildren();
+            childrenDirectories.clear();
+
+            childrenDirectories.addAll(innerItemsList.filtered(item -> (item.isDirectory() && (showHiddenItemsState | !item.isHidden()))?true:false));
+            childrenDirectories.sort((o1, o2) -> (o1.getValue().getName().toUpperCase().compareTo(o2.getValue().getName().toUpperCase())));
+            countDownLatch.countDown();
+            return null;
+        }
+    }
+
     private class ItemContentLoader extends Task<Void> {
 
         FXOptimizedItem item;
         CountDownLatch countDownLatch;
-        ObservableList<FXOptimizedItem> selectedItemsList;
+        ObservableList<FXOptimizedItem> innerItemsList;
 
-        public ItemContentLoader(FXOptimizedItem item, ObservableList<FXOptimizedItem> selectedItemsList, CountDownLatch countDownLatch) {
+        public ItemContentLoader(FXOptimizedItem item, ObservableList<FXOptimizedItem> innerItemsList, CountDownLatch countDownLatch) {
             this.item = item;
             this.countDownLatch = countDownLatch;
-            this.selectedItemsList = selectedItemsList;
+            this.innerItemsList = innerItemsList;
         }
 
         private int toInt(boolean value) {
@@ -173,11 +189,11 @@ public class MainAppWindowController implements IConflictListener {
 
         @Override
         protected Void call() throws Exception {
-            ObservableList<FXOptimizedItem> innerItemsInView = tablevDirContent.getItems();
+            ObservableList<FXOptimizedItem> innerItemsInView = MainAppWindowController.this.innerItemsList.getItems();
             innerItemsInView.clear();
 
-            if (!selectedItemsList.isEmpty()) {
-                innerItemsInView.addAll((showHiddenItemsState) ? selectedItemsList : selectedItemsList.filtered(fxOptimizedItem -> !fxOptimizedItem.isHidden()));
+            if (!innerItemsList.isEmpty()) {
+                innerItemsInView.addAll((showHiddenItemsState) ? innerItemsList : innerItemsList.filtered(fxOptimizedItem -> !fxOptimizedItem.isHidden()));
                 innerItemsInView.sort((o1, o2) -> {
                     int o1ToInt = toInt(o1.isDirectory());
                     int o2ToInt = toInt(o2.isDirectory());
@@ -187,7 +203,7 @@ public class MainAppWindowController implements IConflictListener {
                     return o2ToInt - o1ToInt;
                 });
             }
-            Platform.runLater(()->labelParentPath.setText((parentItem.getValue().isRoot()?"\\root":parentItem.getValue().getPath().toAbsolutePath().toString())));
+            Platform.runLater(()->labelParentPath.setText((parentItem.getValue().isRoot()?parentItem.getName():parentItem.getValue().getPath().toAbsolutePath().toString())));
             countDownLatch.countDown();
             return null;
         }
@@ -240,38 +256,6 @@ public class MainAppWindowController implements IConflictListener {
         }
     }
 
-    private class SubfoldersLoader extends Task<Void> {
-
-        CountDownLatch countDownLatch;
-        FXOptimizedItem parentItem;
-        ObservableList<FXOptimizedItem> selectedItemsList;
-
-        public SubfoldersLoader(FXOptimizedItem parentItem, ObservableList<FXOptimizedItem> selectedItemsList, CountDownLatch countDownLatch) {
-            this.countDownLatch = countDownLatch;
-            this.parentItem = parentItem;
-            this.selectedItemsList = selectedItemsList;
-        }
-
-        @Override
-        protected Void call() throws Exception {
-
-            ObservableList<TreeItem<Item>> childrenDirectories = parentItem.getChildren();
-            childrenDirectories.clear();
-
-            for (FXOptimizedItem item : selectedItemsList) {
-                if (item.isDirectory()) {
-                    if (showHiddenItemsState | !item.isHidden()) {
-                        childrenDirectories.add(new FXOptimizedItem(item.getItem()));
-                    }
-                }
-            }
-            parentItem.getChildren().sort((o1, o2) ->
-                    (o1.getValue().getName().toUpperCase().compareTo(o2.getValue().getName().toUpperCase())));
-            countDownLatch.countDown();
-            return null;
-        }
-    }
-
     private class ItemPaster extends Task<Void> {
 
         Map<Item, ItemConflicts> operationErrorsMap;
@@ -284,6 +268,7 @@ public class MainAppWindowController implements IConflictListener {
 
         @Override
         protected Void call() throws Exception {
+
             Map<Item, ItemConflicts> operationError;
             Set<Item> itemsBuffer = fileManager.getBuffer();
 
@@ -302,11 +287,14 @@ public class MainAppWindowController implements IConflictListener {
                 }
             }
 
+            if(fileManager.isCutOperation())
+                fileManager.getBuffer().clear();
+
             if (!operationErrorsMap.isEmpty()) {
                 onConflictsHandler(operationErrorsMap);
             }
 
-            refreshItems(parentItem, tablevDirContent, 0);
+            refreshItems(parentItem, false, 0, itemsTreeRefreshListener, itemContentContainerListener);
 
             return null;
         }
@@ -316,10 +304,11 @@ public class MainAppWindowController implements IConflictListener {
     public void initialize() {
 
         fileManager = FileManagerImpl.getInstance();
-        ((IConlictable) fileManager).addListener(this);
 
         threadLogicUIPool = MainController.getThreadLogicUIPool();
-        selectedItemsList = FXCollections.observableArrayList();
+        itemsOperationsPool= Executors.newCachedThreadPool();
+
+        innerItems = FXCollections.observableArrayList();
 
         lock = new Object();
 
@@ -328,9 +317,7 @@ public class MainAppWindowController implements IConflictListener {
 
         initItemNameConflictModal();
         initOkCancelModal();
-
         initOperationsConflictModal();
-
         initNewFolderNameModal();
 
         initItemsTree();
@@ -341,8 +328,8 @@ public class MainAppWindowController implements IConflictListener {
             getOkCancelCloseModal();
         });
 
-        refreshItems(parentItem, treevItemsTree, 2000L);
         guiControlsStateHandler(GuiControlsState.ROOT_LEVEL);
+        refreshItems(parentItem, true, 2000, itemsTreeRefreshListener, itemContentContainerListener);
     }
 
     private void initButtons() {
@@ -350,21 +337,21 @@ public class MainAppWindowController implements IConflictListener {
         Task<Void> buttonsImageLoader = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                toolbNewFolder.setTooltip(new Tooltip("Create a folder..."));
-                toolbCopy.setTooltip(new Tooltip("Copy item(s)"));
-                toolbCut.setTooltip(new Tooltip("Cut item(s)"));
-                toolbDelete.setTooltip(new Tooltip("Delete item(s)"));
-                toolbPaste.setTooltip(new Tooltip("Paste item(s)"));
-                toolbShowHiddenItems.setTooltip(new Tooltip("Show/hide hidden items"));
-                toolbUp.setTooltip(new Tooltip("Back"));
+                toolbNewFolder.setTooltip(new Tooltip(locales.getString("tooltipCreate")));
+                toolbCopy.setTooltip(new Tooltip(locales.getString("tooltipCopy")));
+                toolbCut.setTooltip(new Tooltip(locales.getString("tooltipCut")));
+                toolbDelete.setTooltip(new Tooltip(locales.getString("tooltipDelete")));
+                toolbPaste.setTooltip(new Tooltip(locales.getString("tooltipPaste")));
+                toolbShowHiddenItems.setTooltip(new Tooltip(locales.getString("tooltipShowHide")));
+                toolbUp.setTooltip(new Tooltip(locales.getString("tooltipBack")));
 
-                Image imageToolbNewFolder = new Image(getClass().getResourceAsStream("/img/iconNewFolder.png"));
-                Image imageToolbCopy = new Image(getClass().getResourceAsStream("/img/iconCopy.png"));
-                Image imageToolbCut = new Image(getClass().getResourceAsStream("/img/iconCut.png"));
-                Image imageToolbDelete = new Image(getClass().getResourceAsStream("/img/iconRemove.png"));
-                Image imageToolbPaste = new Image(getClass().getResourceAsStream("/img/iconPaste.png"));
-                Image imageToolbShowHiddenItems = new Image(getClass().getResourceAsStream("/img/iconHide.png"));
-                Image imageToolbUp = new Image(getClass().getResourceAsStream("/img/iconLevelUp.png"));
+                Image imageToolbNewFolder = new Image(getClass().getResourceAsStream(devResources.getString("imagePathCreate")));
+                Image imageToolbCopy = new Image(getClass().getResourceAsStream(devResources.getString("imagePathCopy")));
+                Image imageToolbCut = new Image(getClass().getResourceAsStream(devResources.getString("imagePathCut")));
+                Image imageToolbDelete = new Image(getClass().getResourceAsStream(devResources.getString("imagePathDelete")));
+                Image imageToolbPaste = new Image(getClass().getResourceAsStream(devResources.getString("imagePathPaste")));
+                Image imageToolbShowHiddenItems = new Image(getClass().getResourceAsStream(devResources.getString("imagePathShowHide")));
+                Image imageToolbUp = new Image(getClass().getResourceAsStream(devResources.getString("imagePathBack")));
 
                 Platform.runLater(new Runnable() {
                     @Override
@@ -392,7 +379,6 @@ public class MainAppWindowController implements IConflictListener {
             @Override
             public void onButtonOkPressed(HashSet<Item> itemsCollection, String path) {
                 onCloseAppHandler();
-
             }
 
             @Override
@@ -416,14 +402,14 @@ public class MainAppWindowController implements IConflictListener {
         itemsTreeRefreshListener = new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
-                threadLogicUIPool.execute(new SubfoldersLoader(parentItem, selectedItemsList, countDownLatch));
+                itemsOperationsPool.execute(new SubfoldersLoader(parentItem, innerItems, countDownLatch));
             }
         };
 
         itemContentContainerListener = new IRefreshingListener() {
             @Override
             public void refresh(CountDownLatch countDownLatch) {
-                threadLogicUIPool.execute(new ItemContentLoader(parentItem, selectedItemsList, countDownLatch));
+                itemsOperationsPool.execute(new ItemContentLoader(parentItem, innerItems, countDownLatch));
             }
         };
 
@@ -436,7 +422,7 @@ public class MainAppWindowController implements IConflictListener {
                     onConflictsHandler(operationErrorsMap);
                 }
                 Platform.runLater(() -> MainController.getCurrentStage().hide());
-                refreshItems(parentItem, tablevDirContent, 0);
+                refreshItems(parentItem, false, 0, itemsTreeRefreshListener,itemContentContainerListener);
             }
 
             @Override
@@ -460,7 +446,7 @@ public class MainAppWindowController implements IConflictListener {
                     operationErrorsMap.put(new Item(Paths.get(destinationPath, newFolderName)), ItemConflicts.CANT_CREATE_ITEM);
                     onConflictsHandler(operationErrorsMap);
                 }
-                refreshItems(parentItem, tablevDirContent, 0);
+                refreshItems(parentItem, false, 0, itemsTreeRefreshListener, itemContentContainerListener);
 
             }
         };
@@ -468,8 +454,9 @@ public class MainAppWindowController implements IConflictListener {
 
     private void initItemNameConflictModal() {
         if (itemNameConflictModalLoader == null) {
-            itemNameConflictModalLoader = new FXMLLoader(getClass().getResource("/fxml/ItemNameConflictModal.fxml"));
+            itemNameConflictModalLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlItemNameConflictModal")));
             itemNameConflictModalStage = new Stage();
+            itemNameConflictModalLoader.setResources(MainController.getLocales());
 
             try {
                 itemNameConflictModalparent = itemNameConflictModalLoader.load();
@@ -478,7 +465,7 @@ public class MainAppWindowController implements IConflictListener {
             }
 
             Scene scene = new Scene(itemNameConflictModalparent);
-            itemNameConflictModalStage.setTitle("Please choose an action...");
+            itemNameConflictModalStage.setTitle(locales.getString("titleNameConflictModal"));
             itemNameConflictModalStage.setScene(scene);
             itemNameConflictModalStage.sizeToScene();
             itemNameConflictModalStage.setResizable(false);
@@ -486,19 +473,15 @@ public class MainAppWindowController implements IConflictListener {
             itemNameConflictModalStage.initOwner(MainController.getPrimaryStage());
             itemNameConflictModalController = itemNameConflictModalLoader.getController();
             itemNameConflictModalController.setWaitingResultLock(lock);
-            scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {
-                @Override
-                public void handle(WindowEvent event) {
-                    event.consume();
-                }
-            });
+            scene.getWindow().setOnCloseRequest(event -> event.consume());
         }
     }
 
     private void initOkCancelModal() {
         if (okCancelModalLoader == null) {
-            okCancelModalLoader = new FXMLLoader(getClass().getResource("/fxml/OkCancelContainerModal.fxml"));
+            okCancelModalLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlOkCancelModal")));
             okCancelModalStage = new Stage();
+            okCancelModalLoader.setResources(MainController.getLocales());
 
             try {
                 okCancelModalparent = okCancelModalLoader.load();
@@ -507,7 +490,7 @@ public class MainAppWindowController implements IConflictListener {
             }
 
             Scene scene = new Scene(okCancelModalparent);
-            okCancelModalStage.setTitle("Warning!");
+            okCancelModalStage.setTitle(locales.getString("titleOkCancelModal"));
             okCancelModalStage.setScene(scene);
             okCancelModalStage.sizeToScene();
             okCancelModalStage.setResizable(false);
@@ -519,8 +502,9 @@ public class MainAppWindowController implements IConflictListener {
 
     private void initOperationsConflictModal() {
         if (operationsConflictModalLoader == null) {
-            operationsConflictModalLoader = new FXMLLoader(getClass().getResource("/fxml/OperationsConflictModal.fxml"));
+            operationsConflictModalLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlOperationsConflictModal")));
             operationsConflictModalStage = new Stage();
+            operationsConflictModalLoader.setResources(MainController.getLocales());
 
             try {
                 operationsConflictModalparent = operationsConflictModalLoader.load();
@@ -529,7 +513,7 @@ public class MainAppWindowController implements IConflictListener {
             }
 
             Scene scene = new Scene(operationsConflictModalparent);
-            operationsConflictModalStage.setTitle("Operation's conflicts");
+            operationsConflictModalStage.setTitle(locales.getString("titleOperationsConflictsModal"));
             operationsConflictModalStage.setScene(scene);
             operationsConflictModalStage.sizeToScene();
             operationsConflictModalStage.setResizable(false);
@@ -541,8 +525,9 @@ public class MainAppWindowController implements IConflictListener {
 
     private void initNewFolderNameModal() {
         if (newFolderNameModalLoader == null) {
-            newFolderNameModalLoader = new FXMLLoader(getClass().getResource("/fxml/NewFolderNameModal.fxml"));
+            newFolderNameModalLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlNewFolderNameModal")));
             newFolderNameModalStage = new Stage();
+            newFolderNameModalLoader.setResources(MainController.getLocales());
 
             try {
                 newFolderNameModalparent = newFolderNameModalLoader.load();
@@ -551,7 +536,7 @@ public class MainAppWindowController implements IConflictListener {
             }
 
             Scene scene = new Scene(newFolderNameModalparent);
-            newFolderNameModalStage.setTitle("New folder...");
+            newFolderNameModalStage.setTitle(locales.getString("titleCreateFolderModal"));
             newFolderNameModalStage.setScene(scene);
             newFolderNameModalStage.sizeToScene();
             newFolderNameModalStage.setResizable(false);
@@ -562,62 +547,15 @@ public class MainAppWindowController implements IConflictListener {
     }
 
     private void initItemsTree() {
-        HashSet<Item> selectedItems = null;
+
         parentItem = FileManagerItemsFactory.getRoot();
         treevItemsTree.setRoot(parentItem);
         treevItemsTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
-        if (selectedItems.isEmpty()){
-            Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
-            operationErrorsMap.put(parentItem.getValue(),ItemConflicts.SECURITY_ERROR);
-            onConflictsHandler(operationErrorsMap);
-        }
-        for (Item selectedItem : selectedItems) {
-            selectedItemsList.add(new FXOptimizedItem(selectedItem));
-        }
     }
 
     private void initItemContentView() {
-        tablevDirContent.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tablevDirContent.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                if (event.getClickCount() == 2) {
-                    FXOptimizedItem selectedInList;
-                    try {
-
-                        selectedInList = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
-
-                        if (selectedInList.isDirectory()) {
-                            parentItem = selectedInList;
-
-                            refreshItems(parentItem, tablevDirContent, 2000L);
-                        }
-                    } catch (NullPointerException e) {
-                        return;
-                    }
-                    return;
-                }
-                if (event.getClickCount() == 1) {
-                    FXOptimizedItem selectedItem=(FXOptimizedItem)tablevDirContent.getSelectionModel().getSelectedItem();
-                    if (selectedItem != null) {
-                        if (selectedItem.isDirectory()) {
-                            if (!selectedItem.getItem().isRootStorage()) {
-                                guiControlsStateHandler(GuiControlsState.FOLDER_SELECTED);
-                            } else {
-                                guiControlsStateHandler(GuiControlsState.ROOT_LEVEL);
-                            }
-
-                        } else {
-                            guiControlsStateHandler(GuiControlsState.FILE_SELECTED);
-                        }
-                    }
-                }else{
-                    guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
-                }
-            }
-        });
-        selectedItemsList.addListener(new ListChangeListener<FXOptimizedItem>() {
+        innerItemsList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        innerItems.addListener(new ListChangeListener<FXOptimizedItem>() {
             @Override
             public void onChanged(Change<? extends FXOptimizedItem> c) {
                 if (parentItem.getItem().isRoot()) {
@@ -628,17 +566,12 @@ public class MainAppWindowController implements IConflictListener {
                     guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
                     return;
                 }
-                if (selectedItemsList.isEmpty()) {
+                if (innerItems.isEmpty()) {
                     guiControlsStateHandler(GuiControlsState.EMPTY_CONTENT);
                     return;
                 }
             }
         });
-    }
-
-    private void showModalWindow(Stage modalWindowStage) {
-        MainController.setCurrentStage(modalWindowStage);
-        modalWindowStage.show();
     }
 
     //handlers
@@ -686,7 +619,7 @@ public class MainAppWindowController implements IConflictListener {
                     case FILE_SELECTED:{
                         stateCopy=true;
                         stateCut=true;
-                        statePaste=(tablevDirContent.getSelectionModel().getSelectedItems().size()==1)?false:true;
+                        statePaste=(innerItemsList.getSelectionModel().getSelectedItems().size()==1)?false:true;
                         stateDelete=true;
                         stateBack=true;
                         stateCreate=false;
@@ -722,44 +655,78 @@ public class MainAppWindowController implements IConflictListener {
     }
 
     private void onFatalErrorHandler() {
-        okCancelModalController.initWarningModal("The fatal application error happened and the application will be closed!",actionOnCloseApp,null);
+        okCancelModalController.initWarningModal(locales.getString("textFatalError"),actionOnCloseApp,null);
         okCancelModalController.getButtonCancel().setVisible(false);
         showModalWindow(okCancelModalStage);
     }
 
     //gui reactions
-    public void loadItemContent(MouseEvent mouseEvent) {
-
-        Object itemsContainer = treevItemsTree;
+    public void onClickItemsTree(MouseEvent event) {
 
         FXOptimizedItem tempSelectedLink = parentItem;
         FXOptimizedItem tempSelected = tempSelectedLink;
+        boolean isIconWillChanged=false;
+        long delayImitation=0;
 
-        try {
-            parentItem = (FXOptimizedItem) treevItemsTree.getSelectionModel().getSelectedItem();
+        parentItem = (FXOptimizedItem) treevItemsTree.getSelectionModel().getSelectedItem();
+        if (event.getClickCount() == 1) {
 
-        } catch (NullPointerException e) {
-            return;
+            if (parentItem == null) {
+                parentItem = tempSelected;
+            }
+
+            if (parentItem.isLeaf() || parentItem.isExpanded()) {
+                isIconWillChanged = true;
+                parentItem.getChildren().clear();
+                delayImitation=2000;
+            }
+            refreshItems(parentItem, isIconWillChanged, delayImitation, itemsTreeRefreshListener, itemContentContainerListener);
         }
-
-        if (parentItem == null) {
-            parentItem = tempSelected;
-            itemsContainer = null;
-        }
-
-        if (!parentItem.isLeaf()) {
-            itemsContainer = null;
-        }
-        refreshItems(parentItem, itemsContainer, 2000);
     }
 
-    public void onClosePressed(ActionEvent actionEvent) {
+    public void onClickItemsTable(MouseEvent event) {
+        if (event.getClickCount() == 2) {
+            FXOptimizedItem selectedInList;
+            try {
+
+                selectedInList = (FXOptimizedItem) innerItemsList.getSelectionModel().getSelectedItem();
+
+                if (selectedInList.isDirectory()) {
+                    parentItem = selectedInList;
+
+                    refreshItems(parentItem, true, 2000, itemContentContainerListener);
+                }
+            } catch (NullPointerException e) {
+                return;
+            }
+            return;
+        }
+        if (event.getClickCount() == 1) {
+            FXOptimizedItem selectedItem=(FXOptimizedItem) innerItemsList.getSelectionModel().getSelectedItem();
+            if (selectedItem != null) {
+                if (selectedItem.isDirectory()) {
+                    if (!selectedItem.getItem().isRootStorage()) {
+                        guiControlsStateHandler(GuiControlsState.FOLDER_SELECTED);
+                    } else {
+                        guiControlsStateHandler(GuiControlsState.ROOT_LEVEL);
+                    }
+
+                } else {
+                    guiControlsStateHandler(GuiControlsState.FILE_SELECTED);
+                }
+            }
+        }else{
+            guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
+        }
+    }
+
+    public void onClickClose(ActionEvent actionEvent) {
         getOkCancelCloseModal();
     }
 
-    public void copyItems(ActionEvent actionEvent) {
+    public void onClickCopy(ActionEvent actionEvent) {
 
-        ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
+        ObservableList<FXOptimizedItem> selectedItems = innerItemsList.getSelectionModel().getSelectedItems();
         HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
 
         for (FXOptimizedItem selectedItem : selectedItems) {
@@ -770,14 +737,14 @@ public class MainAppWindowController implements IConflictListener {
             onConflictsHandler(operationErrorsMap);
         }
 
-        refreshItems(parentItem, tablevDirContent, 0);
+        refreshItems(parentItem, false, 0, itemContentContainerListener);
 
         guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
     }
 
-    public void cutItems(ActionEvent actionEvent) {
+    public void onClickCut(ActionEvent actionEvent) {
 
-        ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
+        ObservableList<FXOptimizedItem> selectedItems = innerItemsList.getSelectionModel().getSelectedItems();
         HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
 
         for (FXOptimizedItem selectedItem : selectedItems) {
@@ -791,34 +758,30 @@ public class MainAppWindowController implements IConflictListener {
 
         for (FXOptimizedItem selectedItem : selectedItems) {
             if (!operationErrorsMap.containsKey(selectedItem.getItem())) {
-
-                FileManagerItemsFactory.updateIcon(
-                        tablevDirContent,
-                        selectedItem,
-                        (selectedItem.isDirectory()) ? FileManagerItemsFactory.getDirectoryCutted() : FileManagerItemsFactory.getFileCutted());
+                selectedItem.setIcon((selectedItem.isDirectory()) ? FileManagerItemsFactory.getDirectoryCutted() : FileManagerItemsFactory.getFileCutted());
             }
         }
 
-        refreshItems(parentItem, tablevDirContent, 0);
+        refreshItems(parentItem, true, 0, itemsTreeRefreshListener, itemContentContainerListener);
 
         guiControlsStateHandler(GuiControlsState.NOTHING_SELECTED);
     }
 
-    public void pasteItems(ActionEvent actionEvent) {
+    public void onClickPaste(ActionEvent actionEvent) {
 
         FXOptimizedItem destinationFolder = parentItem;
 
-        if (tablevDirContent.getSelectionModel().getSelectedItem() != null && tablevDirContent.getSelectionModel().getSelectedItems().size()==1) {
-            destinationFolder = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
+        if (innerItemsList.getSelectionModel().getSelectedItem() != null && innerItemsList.getSelectionModel().getSelectedItems().size()==1) {
+            destinationFolder = (FXOptimizedItem) innerItemsList.getSelectionModel().getSelectedItem();
         }
 
         ItemPaster itemPaster = new ItemPaster(destinationFolder);
-        threadLogicUIPool.execute(itemPaster);
+        itemsOperationsPool.execute(itemPaster);
     }
 
-    public void deleteItems(ActionEvent actionEvent) {
+    public void onClickDelete(ActionEvent actionEvent) {
 
-        ObservableList<FXOptimizedItem> selectedItems = tablevDirContent.getSelectionModel().getSelectedItems();
+        ObservableList<FXOptimizedItem> selectedItems = innerItemsList.getSelectionModel().getSelectedItems();
         HashSet<Item> itemsCollection = new HashSet<>(selectedItems.size());
 
         for (FXOptimizedItem selectedItem : selectedItems) {
@@ -827,53 +790,49 @@ public class MainAppWindowController implements IConflictListener {
 
         MainController.setCurrentStage(okCancelModalStage);
 
-        okCancelModalController.initWarningModal("Selected items will be deleted! Are you sure?", actionOnDeleteItem, itemsCollection);
+        okCancelModalController.initWarningModal(locales.getString("textDeleteItems"), actionOnDeleteItem, itemsCollection);
         showModalWindow(okCancelModalStage);
     }
 
-    public void showHiddenItems(ActionEvent actionEvent) {
+    public void onClickMenuShowHide(ActionEvent actionEvent) {
 
         showHiddenItemsState = cmiShowHiddenItems.isSelected();
         toolbShowHiddenItems.setSelected(showHiddenItemsState);
 
-        AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, treevItemsTree, 0);
-        appViewRefresher.addListener(itemsTreeRefreshListener);
-        appViewRefresher.addListener(itemContentContainerListener);
-        threadLogicUIPool.execute(appViewRefresher);
+        AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, false, 0,itemsTreeRefreshListener,itemContentContainerListener);
+        itemsOperationsPool.execute(appViewRefresher);
     }
 
-    public void showAboutInfo(ActionEvent actionEvent) {
-        okCancelModalController.initWarningModal("It's my test application!",actionOnAboutInfo,null);
+    public void onClickAbout(ActionEvent actionEvent) {
+        okCancelModalController.initWarningModal(locales.getString("textAbout"),actionOnAboutInfo,null);
         okCancelModalController.getButtonCancel().setVisible(false);
         showModalWindow(okCancelModalStage);
     }
 
-    public void getLevelUp(ActionEvent actionEvent) {
+    public void onClickBack(ActionEvent actionEvent) {
 
         if (parentItem.equals(FileManagerItemsFactory.getRoot())) {
             return;
         }
         parentItem = parentItem.getParentItem();
 
-        refreshItems(parentItem, tablevDirContent, 0);
+        refreshItems(parentItem, false, 0, itemContentContainerListener);
     }
 
-    public void onButtonPressedshowHiddenItems(ActionEvent actionEvent) {
+    public void onClickButtonShowHide(ActionEvent actionEvent) {
         showHiddenItemsState = toolbShowHiddenItems.isSelected();
         cmiShowHiddenItems.setSelected(showHiddenItemsState);
 
-        AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, treevItemsTree, 0);
-        appViewRefresher.addListener(itemsTreeRefreshListener);
-        appViewRefresher.addListener(itemContentContainerListener);
-        threadLogicUIPool.execute(appViewRefresher);
+        AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, false, 0, itemsTreeRefreshListener,itemContentContainerListener);
+        itemsOperationsPool.execute(appViewRefresher);
     }
 
-    public void onCreateNewFolderPressed(ActionEvent actionEvent) {
+    public void onClickCreateFolder(ActionEvent actionEvent) {
         FXOptimizedItem destinationFolder = parentItem;
 
         if (actionEvent.getSource() instanceof MenuItem && ((MenuItem) actionEvent.getSource()).getId().equals("contextNewFolder")) {
-            if (tablevDirContent.getSelectionModel().getSelectedItem() != null) {
-                destinationFolder = (FXOptimizedItem) tablevDirContent.getSelectionModel().getSelectedItem();
+            if (innerItemsList.getSelectionModel().getSelectedItem() != null) {
+                destinationFolder = (FXOptimizedItem) innerItemsList.getSelectionModel().getSelectedItem();
             }
         }
 
@@ -883,29 +842,34 @@ public class MainAppWindowController implements IConflictListener {
 
     //additional methods
     protected void getOkCancelCloseModal() {
-        okCancelModalController.initWarningModal("Now the application will be closed. Are you sure?", actionOnCloseApp, null);
+        okCancelModalController.initWarningModal(locales.getString("textCloseApp"), actionOnCloseApp, null);
         showModalWindow(okCancelModalStage);
     }
 
-    private void refreshItems(FXOptimizedItem parentItem, Object itemsContainer, long delayImitationMs) {
-        HashSet<Item> selectedItems = null;
+    private void refreshItems(FXOptimizedItem parentItem, boolean isIconWillChanged, long delayImitationMs, IRefreshingListener...refreshers) {
+        threadLogicUIPool.execute(()->{
+            HashSet<Item> innerItems;
+            try {
+                innerItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
+                this.innerItems.clear();
+                for (Item innerItem : innerItems) {
+                    this.innerItems.add(new FXOptimizedItem(innerItem));
+                }
+                AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, isIconWillChanged, delayImitationMs,refreshers);
+                itemsOperationsPool.execute(appViewRefresher);
 
-        try {
-            selectedItems = (HashSet<Item>) fileManager.getContent(parentItem.getValue());
-            selectedItemsList.clear();
-            for (Item selectedItem : selectedItems) {
-                selectedItemsList.add(new FXOptimizedItem(selectedItem));
+            } catch (Exception e) {
+                Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
+                operationErrorsMap.put(parentItem.getValue(), ItemConflicts.ACCESS_ERROR);
+                onConflictsHandler(operationErrorsMap);
+                parentItem.setIcon(FileManagerItemsFactory.getDirectoryUnavaible());
+                this.innerItems.clear();
             }
-        } catch (Exception e) {
-            Map<Item, ItemConflicts> operationErrorsMap=new HashMap();
-            operationErrorsMap.put(parentItem.getValue(), ItemConflicts.SECURITY_ERROR);
-            onConflictsHandler(operationErrorsMap);
-            selectedItemsList.clear();
-        }
+        });
+    }
 
-        AppViewRefresher appViewRefresher = new AppViewRefresher(parentItem, itemsContainer, delayImitationMs);
-        appViewRefresher.addListener(itemsTreeRefreshListener);
-        appViewRefresher.addListener(itemContentContainerListener);
-        threadLogicUIPool.execute(appViewRefresher);
+    private void showModalWindow(Stage modalWindowStage) {
+        MainController.setCurrentStage(modalWindowStage);
+        modalWindowStage.show();
     }
 }

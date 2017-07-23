@@ -4,24 +4,29 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ProgressBar;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Random;
+import java.util.ResourceBundle;
 import java.util.concurrent.*;
 
 /**
  * Created by kostyazxcvbn on 06.07.2017.
  */
-public class StartScreenController {
+public class StartScreenController implements Initializable{
 
     @FXML
     private ProgressBar progbStartScreenLoading;
 
     private ExecutorService threadLogicUIPool;
+    private ResourceBundle locales;
+    private ResourceBundle devResources;
 
     public void init() {
         imitateLoading();
@@ -47,7 +52,7 @@ public class StartScreenController {
                     try {
                         Thread.sleep(random.nextInt(200) + 100);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        break;
                     }
                 } while (progressLevel < 1);
                 progbStartScreenLoading.setProgress(1);
@@ -64,12 +69,14 @@ public class StartScreenController {
         Stage stage = MainController.getPrimaryStage();
         Parent root = null;
         try {
-            root = FXMLLoader.load(getClass().getResource("/fxml/MainAppWindow.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlMainAppWindow")));
+            fxmlLoader.setResources(MainController.getLocales());
+            root = fxmlLoader.load();
         } catch (IOException e) {
             runAppFatalErrorHandler();
         }
         Scene scene=new Scene(root);
-        stage.setTitle("The ZxcvbnFileNManager");
+        stage.setTitle(locales.getString("titleMainAppWindow"));
         stage.setScene(scene);
         stage.sizeToScene();
         stage.show();
@@ -78,6 +85,12 @@ public class StartScreenController {
     }
 
     private void runAppFatalErrorHandler() {
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        this.locales = resources;
+        this.devResources=MainController.getDevResources();
     }
 }
 

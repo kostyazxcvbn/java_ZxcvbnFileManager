@@ -3,13 +3,24 @@ package controllers;/**
  */
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,6 +30,14 @@ public class MainController extends Application {
     private static Stage currentStage;
     private static ExecutorService threadLogicUIPool;
 
+    private Locale locale;
+    private static ResourceBundle locales;
+    private static ResourceBundle devResources;
+
+    public static ResourceBundle getDevResources() {
+        return devResources;
+    }
+
     public static ExecutorService getThreadLogicUIPool() {
         return threadLogicUIPool;
     }
@@ -27,6 +46,10 @@ public class MainController extends Application {
         if (MainController.threadLogicUIPool == null) {
             MainController.threadLogicUIPool = threadLogicUIPool;
         }
+    }
+
+    public static ResourceBundle getLocales() {
+        return locales;
     }
 
     public static Stage getCurrentStage() {
@@ -47,6 +70,11 @@ public class MainController extends Application {
         }
     }
 
+    private void FatalErrorHandler() {
+        Platform.exit();
+        System.exit(1);
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -54,18 +82,22 @@ public class MainController extends Application {
     @Override
     public void start(Stage primaryStage) {
 
-        Stage startStage = new Stage(StageStyle.UNDECORATED);;
+        locale=new Locale("ru");
+        locales =ResourceBundle.getBundle("bundles.locale", locale);
+        devResources=ResourceBundle.getBundle("bundles.dev_resources");
 
+        Stage startStage = new Stage(StageStyle.UNDECORATED);;
         setPrimaryStage(primaryStage);
         setThreadLogicUIPool(Executors.newCachedThreadPool());
         FXMLLoader fxmlLoader=null;
 
         Parent root = null;
         try {
-            fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/StartScreen.fxml"));
+            fxmlLoader = new FXMLLoader(getClass().getResource(devResources.getString("fxmlStartScreen")));
+            fxmlLoader.setResources(locales);
             root = fxmlLoader.load();
         } catch (IOException e) {
-            e.printStackTrace();
+            FatalErrorHandler();
         }
 
         Scene scene=new Scene(root);
